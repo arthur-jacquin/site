@@ -1,0 +1,162 @@
+\title{Structured Query Language}
+\author{Arthur Jacquin}
+\documentclass{hibiscus}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% https://sqlite.org/lang.html
+% TODO : column_name LIKE pattern
+% TODO : HAVING condition
+
+\section{Management}
+
+\subsection{Entering the SQL shell}
+
+\begin{lstlisting}[language=bash]
+alias sql="sqlite3 -header -box"
+sql [database_file]
+\end{lstlisting}
+
+\subsection{Quitting the shell}
+
+\begin{lstlisting}[language=SQL]
+.quit
+\end{lstlisting}
+
+\subsection{Managing databases}
+
+\begin{lstlisting}[language=SQL]
+.open database_name
+.save database_name
+.clone new_database_name
+\end{lstlisting}
+
+\subsection{Formatting output}
+
+\begin{lstlisting}[language=SQL]
+.headers on|off
+.mode list|column|html
+.separator separator
+.width [first_column_width [, ...]]
+\end{lstlisting}
+
+\subsection{Database information}
+
+\begin{lstlisting}[language=SQL]
+.tables
+.schema [table_name|regex_expression]
+.dump [table_name|regex_expression]
+\end{lstlisting}
+
+\section{SQL Queries}
+
+\subsection{Retrieve records}
+
+\begin{lstlisting}[language=SQL]
+SELECT [DISTINCT] [MIN|AVG|MAX|COUNT|SUM(]oid|*|column_name[)] [AS temp_name] [, ...]
+FROM table_name [AS temp_name]
+[JOIN table_name [AS temp_name] ON condition]*
+[WHERE condition]
+[ORDER BY column_name [ASC|DESC] [, ...]]
+[LIMIT number_of_row];
+\end{lstlisting}
+
+\subsection{Managing tables}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE [IF NOT EXISTS] table_name
+  (column_def [, ...]);
+| AS (sql_statement);
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+ALTER TABLE [schema_name .] table_name
+  RENAME TO new_table_name;
+| RENAME [COLUMN] column_name TO new_column_name;
+| ADD [COLUMN] column_def;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+DROP TABLE [IF EXISTS] table_name;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+VACUUM;
+\end{lstlisting}
+
+Undocumented yet : virtual tables, views, triggers, database attachments, index management % TODO
+
+\subsection{Managing records}
+
+\begin{lstlisting}[language=SQL]
+INSERT INTO table_name (column_name [, ...])
+VALUES (value [, ...]);
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+UPDATE table_name
+SET column_name = value [, ...]
+[WHERE condition];
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+DELETE FROM table_name
+[WHERE condition];
+\end{lstlisting}
+
+\section{Reference}
+
+\subsection{Conditions}
+
+\begin{lstlisting}[language=SQL]
+AND|OR|NOT
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL]
+column_name ==|!=|<[=]|>[=] value
+column_name [NOT] IN (sql_statement)|(value [, ...])
+column_name [NOT] BETWEEN min_value AND max_value
+column_name IS [NOT] NULL
+\end{lstlisting}
+
+\subsection{Column definition}
+
+\begin{lstlisting}[language=SQL]
+column_name [NULL|INTEGER|REAL|TEXT|BLOB] [PRIMARY KEY [AUTOINCREMENT]] [UNIQUE] [NOT NULL] [CHECK (condition)]
+\end{lstlisting}
+
+\subsection{Scalar functions}
+
+\begin{lstlisting}[language=SQL]
+abs(X)
+char(X1,X2,...,XN)
+coalesce(X,Y,...)
+length(X)
+lower|upper(X)
+min|max(X,Y,...)
+replace(X,Y,Z)
+round(X[,Y])
+sign(X)
+substring(X,Y,Z)
+[r|l]trim(X[,Y])
+typeof(X)
+\end{lstlisting}
+
+\subsection{Math functions}
+
+\begin{lstlisting}[language=SQL]
+[a](cos|sin|tan)[h](X)
+floor|ceil|trunc(X)
+radians|degrees(X)
+exp(X)
+ln|log[10|2](X)
+log(B,X)
+mod(X,Y)
+pi()
+pow(X,Y)
+sqrt(X)
+\end{lstlisting}
+
+\end{document}

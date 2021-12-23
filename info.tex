@@ -1,0 +1,1616 @@
+\title{Informatique MPSI}
+\author{Arthur Jacquin}
+\documentclass{hibiscus}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+
+\newpage \section{Présentation}
+
+\par Ce document tente de résumer les cours d'informatique de MPSI (Informatique Pour Tous et option Informatique).
+
+\medskip \par Le langage utilisé en Informatique Pour Tous est Python 3. Créé en 1991 par Guido Van Rossum, Python est un language interprété de haut niveau et multi-paradigmes : object, impératif et fonctionnel notamment. La version 3 utilisée est parue en 2009. Le typage est dynamique.
+
+\medskip \par Le langage utilisé en option Informatique est OCaml, créé en 1996 par l'Institut National de Recherche en Informatique et en Automatique. La version utilisée est OCaml 4. Le typage est fort et statique.
+
+\medskip \par De nombreuses notions sont communes aux deux enseignements, ainsi une bonne partie de ce document traite des deux langages simultanément. Les extraits de code sont généralement présentés en parallèle, Python à gauche, Ocaml à droite, afin de faciliter l'identification des points communs et des différences. 
+
+\medskip \par Enfin, une section est destinée au SQL, au programme d'Informatique Pour Tous.
+
+\medskip \par On définit un algorithme comme une \textbf{suite d'instruction} acceptant des \textbf{données d'entrée} et renvoyant un résultat.
+
+
+\newpage \section{Types et variables}
+
+% https://docs.python.org/3/library/index.html
+% https://www.ocaml.org/api/Stdlib.html
+
+\subsection{Types principaux}
+
+\begin{center}\begin{tabular}{|c|c|c|} \hline
+Catégorie & Types Python & Types OCaml \\ \hline
+Vide & \code{None} & \code{unit} \\ \hline
+Booléen & & \code{bool} \\ \hline
+Numérique & \code{bool}, \code{int}, \code{float}, \code{complex}, ... & \code{int}, \code{float}, \code{complex}, ... \\ \hline
+Séquence & \code{list}, \code{str}, \code{tuple} & \code{list}, \code{string}, \code{array} \\ \hline
+Dictionnaire & \code{dict} & \textit{c.f.} \code{Hashtbl} \\ \hline
+Fonction & \code{function} & \code{fun} \\ \hline
+Autres & & \code{char} \\ \hline
+\end{tabular}\end{center}
+
+\subsection{Opérations élémentaires}
+
+\subsubsection{Python}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+not, (or), (and) # Operations sur booleens
+(==), (!=), (<), (<=), (>), (>=) # Comparaisons
+(+), (-), (*), (**), (/), (//), (%) # Operations numeriques
+abs, round # Approximation
+(|), (^), (&), (>>), (<<) # Operations sur les bits
+([not] in), (+), .append, .copy, .pop # Operations sequentielles
+(+), .split, .strip, .replace # Operations sur chaines de caracteres
+bool, int, float, complex, str, tuple, list # Conversions de types
+
+print # Affichage sur sortie standard
+max, min # Recherche d'extremum
+range # cf section Structures usuelles
+chr, ord # Traduction caractere - code ASCII
+len # Operations sur conteneurs
+iter, next # Operations sur iterateurs
+eval, exec # Controle de flot sur chaine de caracteres
+open # cf section Gestion de fichiers
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par En Python, il y a \textit{promotion automatique de type} : les objets sont convertis dans le type le plus complexe avant les calculs.
+
+\medskip \par Pour accéder aux éléments d'un tuple ou liste, on utilise l'instruction \code{tab[i]}. Les indices négatifs fonctionnent également. On peut extraire des listes par \textit{slicing} : \code{tab[deb:]}, \code{tab[:fin]}, \code{tab[deb:fin]} ou encore \code{tab[deb:fin:step]}. On note que l'indice \code{fin} n'est jamais atteint.
+
+\medskip \par Un dernier méchanisme intéressant est la création de listes \textit{en compréhension} : \code{[expression for var in iter [if condition]]}.
+
+\subsubsection{OCaml}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+not, (&&), (||) (* Operations sur booleens *)
+(==), (!=), (<), (<=), (>), (>=), max, min (* Comparaisons *)
+(+), (-), ( * ), (/), (mod), abs (* Operations sur entiers *)
+(+.), (-.), ( *. ), (/.) (* Operations sur flotants *)
+exp, log, ( ** ), sqrt (* Exponentielle et logarithme (flotants) *)
+[a]cos[h], [a]sin[h], [a]tan[h] (* Trigonometrie (flottants) *)
+ceil, floor, truncate (* Approximation (flotants) *)
+(^) (* Operations sur chaines de caracteres *)
+fst, snd (* Operations sur couples *)
+(@) (* Operations sur listes *)
+ref, (!), (:=), incr, decr (* References *)
+exception, raise, failwith (* Gestion d'erreurs *) 
+
+(* Conversion de types *)
+float_of_int, int_of_float (* int <> float *)
+string_of_bool, bool_of_string (* bool <> string *)
+string_of_int, int_of_string (* int <> string *)
+string_of_float, float_of_string (* float <> string *)
+int_of_char, char_of_int (* char <> int *)
+Char.escaped, String.get (* char <> string *)
+
+(* Affichage sur sortie standard *)
+print_char, print_string, print_int, print_float, print_newline
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Variables}
+
+\par Les variables permettent de stocker des valeurs. Déclarer une variable revient à associer un nom à une adresse mémoire où sera stockée la valeur associée à la variable.
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+nom_variable = valeur
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let nom_variable = valeur;;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Certains objets, dits \textit{mutables}, sont modifiés \textit{en place}. Il faut donc se méfier des \textit{shallow copy} (par opposition aux \textit{deep copy}) et de l'\textit{aliasing} : une copie trop simple (attribution de la même adresse mémoire) entraîne la modification systématique des deux objets. Les objets \textit{immutables} ne connaissent pas ce problème car toute attribution donne lieu à un changement d'adresse mémoire.
+
+\medskip \par On appelle \textit{scope} les \textit{environnements} dans lesquels on peut accéder à une variable. Une variable \textit{locale} n'est accessible uniquement dans la définition de la fonction (Python) ou dans l'instruction suivante (OCaml : \code{let var = value in instruction}). Une variable \textit{globale} est accessible partout. La modification d'une variable globale dans la définition d'une fonction Python doit être précédée de l'instruction \code{global var}.
+
+\medskip \par Les appels aux fonctions forment une \textit{pile d'appels} et une pile d'environnements associés. L'appel d'une variable cherchera la définition la plus récente (dans la pile) de la variable.
+
+\subsection{Représentation des réels}
+
+\subsubsection{Complément à 2}
+
+\par Soit $n$ bits. Soit $x \in \lentint -2^{n-1}; 2^{n-1} \lentint$. Si $x$ est positif, on le représente par son écriture en base 2, sinon on le représente par l'écriture binaire de $x + 2^n$.
+
+\subsubsection{Ecriture en virgule flottante normalisé}
+
+$$ \forall x \in \mathbb{R}, \exists! (\epsilon, m, e) \in \{-1; 1\} \times [1; 2[ \times \mathbb{Z}, \quad x = \epsilon \cdot 2^e \cdot m $$
+
+\par Un réel est codé sur 64 bits par :
+\begin{itemize}
+\item 1 bit de signe ($\epsilon$) : \code{0} pour les réels positifs.
+\item 11 bits pour l'exposant ($e$) codé en complément à 2. Des cas particuliers permettent de représenter des valeurs infinies, des zéros signés et des \code{NaN} (\textit{not a number}).
+\item 52 bits pour la mantisse correspondant à la représentation binaire de $m - 1$. 
+\end{itemize}
+
+\medskip \par Tout nombre n'est donc pas représentable : les tailles allouées à l'exposant et à la mantisse sont nécessairement limitées.
+
+
+\newpage \section{Structures usuelles}
+
+En Python, les blocs d'instructions sont définis par les tabulations. En OCaml, on peut transformer une suite d'instructions élémentaires en instruction élémentaire par l'utilisation de \code{begin} et \code{end} :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+instruction_bloc_0
+    instruction_bloc_1
+        instruction_bloc_2
+        instruction_bloc_2
+    instruction_bloc_1
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+begin
+    instruction_1;
+    ...
+    instruction_n;
+end
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Instructions conditionnelles}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+if condition:
+    bloc_instructions
+[elif condition:
+    bloc_instructions]*
+[else:
+    bloc_instructions]
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+if condition then
+    instruction
+[else
+    instruction]
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Boucles}
+
+\subsubsection{Boucles inconditionnelles}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+for variable in iterable:
+    bloc_instructions
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+for variable = deb to fin do
+    instruction
+done
+\end{lstlisting}
+\end{tabular}
+
+\par En Python, les itérables usuels sont les objects séquentiels ou l'instruction \code{range}, dont le fonctionnement est à rapprocher du \textit{slicing} :
+\begin{itemize}
+\item \code{range(fin)} créera les valeurs \code{0}, \code{1}, ..., \code{fin} - \code{1}.
+\item \code{range(deb, fin)} créera les valeurs \code{deb}, \code{deb} + \code{1}, ..., \code{fin} - \code{1}.
+\item \code{range(deb, fin, pas)} créera les valeurs (strictement inférieures à \code{fin}) \code{deb}, \code{deb} + \code{pas}, ...
+\end{itemize}
+
+\medskip \par En OCaml, la \code{variable} prendra successivement les valeurs \code{deb}, \code{deb} + \code{1}, ..., \code{fin}.
+
+\subsubsection{Boucles conditionnelles}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+while condition:
+    bloc_instructions
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+while condition do
+    instruction
+done
+\end{lstlisting}
+\end{tabular}
+
+\subsubsection{Contrôle de flot}
+
+\par Deux commandes permettent de contrôler plus finement les boucles :
+\medskip
+\begin{itemize}
+\item La commande \code{break} force une sortie de boucle.
+\item La commande \code{continue} force le passage à l'itération suivante.
+\end{itemize}
+
+\subsection{Filtrage (OCaml)}
+
+\par Le filtrage (ou \textit{pattern matching}) est une structure très utilisée en OCaml. Elle permet de détecter le constructeur de l'objet en entrée. Si le \textit{pattern matching} est également disponible avec Python depuis la version 3.10., on s'intéresse ici à son utilisation en OCaml. La structure générale de la commande est la suivante.
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+match variable with
+[| constructeur [when condition] -> instruction]*
+\end{lstlisting}
+\end{tabular}
+
+\bigskip \par On parle de \textbf{filtrage avec gardes} lorsque des conditions sont précisées. Le filtrage est dit \textbf{exhaustif} si tous les cas de figure sont traités, sinon il y a \textbf{non exhaustivité du filtrage}. Attention, le compilateur ne connaît pas les hypothèses faites sur les données en entrée. Ainsi, le filtrage suivant (à gauche) d'un entier à valeurs dans $\{0; 1\}$ ne sera pas considéré exhaustif. Pour rendre un filtrage exhaustif, ou plus généralement filtrer positivement n'importe quel constructeur, il est possible d'utiliser l'\textit{underscore} (à droite) :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Caml]
+match val_bool_entiere with
+| 0 -> false
+| 1 -> true
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+match val_bool_entiere with
+| 0 -> false
+| _ -> true
+\end{lstlisting}
+\end{tabular}
+
+\par Comme ce sont les constructeurs qui sont comparés, il n'est pas possible de comparer une variable à une autre. L'algorithme de gauche renverra toujours \code{true} car il est possible d'attribuer la valeur de \code{n} (un entier) à \code{a}, dont la valeur sera écrasée. Pour contourner le problème, on peut utiliser un filtrage avec gardes (à droite) :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Caml]
+let a = 42;;
+match n with
+| a -> true
+| _ -> false;;
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let a = 42;;
+match n with
+| _ when a = n -> true
+| _ -> false;;
+\end{lstlisting}
+\end{tabular}
+
+\par Enfin, il est possible de filtrer plusieurs variables en même temps :
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rec fusion l1 l2 =
+    match l1, l2 with
+    | [], _ -> l2
+    | _, [] -> l1
+    | t1::q1, t2::q2 when t1 < t2 -> t1::(fusion q1 l2)
+    | t1::q1, t2::q2 -> t2::(fusion l1 q2);;
+\end{lstlisting}
+\end{tabular}
+
+
+\newpage \section{Fonctions}
+
+Les fonctions permettent de sauvegarder une suite d'instructions pour y faire appel par la suite.
+
+\subsection{Structure}
+
+Les \code{p} représentent ici des paramètres.
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+def nom_fonc([p][, p]*):
+    bloc_instructions
+
+nom_fonc = lambda [p][, p]*: instruction
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let [rec] nom_fonc [p][ p]* =
+    instruction
+
+let nom_fonc = fun p[ p]* -> instruction
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Paramètres}
+
+\par En Python, les paramètres sont de la forme \code{nom_param[: type][ = val_defaut]}. Il est donc possible d'expliciter le type du paramètre, ainsi qu'une valeur par défaut, valeur que prendra \code{nom_param} si aucune valeur n'est spécifiée. Un paramètre présentant une valeur par défaut est dit \textit{optionnel}, sinon le paramètre est dit \textit{obligatoire}. Les différents paramètres sont séparés par des virgules. Les paramètres obligatoires doivent figurer avant les paramètres optionnels. 
+
+\medskip \par En OCaml, les paramètres sont de la forme \code{nom_param} ou \code{(nom_param : type)}. Tous les paramètres sont donc obligatoires. Les différents paramètres sont séparés par des espaces.
+
+\subsection{Valeur renvoyée}
+
+\par En Python, l'instruction \code{return value} termine la fonction, qui renvoie alors \code{value}. Il peut y avoir plusieurs points de retour dans la fonction. En OCaml, la valeur renvoyée est celle de la dernière instruction.
+
+\subsection{Fonctions récursives}
+
+\par Une fonction est dite récursive lorsqu'elle s'appelle elle-même. En OCaml, il faut déclarer qu'une fonction est récursive avec le mot clé \code{rec} (\textit{c.f.} Structures). En Python, aucune précision n'est demandée.
+
+\subsection{Paradigmes procédural et fonctionnel}
+
+\par On dit qu'une fonction est une \textbf{procédure} et agit par \textit{effets de bord} lorsqu'elle modifie l'environnement (les variables, la sortie standard, ...) et ne renvoie rien. De telles fonctions sont caractéristiques du paradigme procédural.
+
+\medskip \par Par opposition aux procédures, les fonctions ne modifiant pas l'environnement et renvoyant un résultat sont dites \textbf{fonctions pures} et sont caractéristiques du paradigme fonctionnel.
+
+\subsection{Exemples}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+def somme_pwr(a: list, b = 2):
+    res = 0
+    for elem in a:
+        res += elem**b
+    return res
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec pgcd (a: int) b =
+    if b = 0 then a
+    else pgcd b (a mod b);;
+\end{lstlisting}
+\end{tabular}
+
+
+\newpage \section{Analyse}
+
+\subsection{Terminaison}
+
+\par Il faut s'assurer que les programmes écrits se terminent. Deux schémas peuvent provoquer la non-terminaison : les boucles conditionnelles (si la condition reste toujours vraie) et les fonctions récursives. Dans les deux cas, prouver la terminaison revient à exhiber un \textbf{variant}, quantité entière positive strictement décroissante. En effet, il n'existe pas de suites strictement décroissante définie sur $\mathbb{N}$ à valeurs entières positives, d'où la terminaison.
+
+\subsection{Validité}
+
+Il faut également s'assurer que le résultat renvoyé par l'algorithme est bien celui souhaité. Prouver la validité revient à exhiber un \textbf{invariant}, prédicat pour lequel il faut prouver :
+
+\medskip \begin{enumerate}
+\item L'\textbf{initialisation} : les préconditions rendent le prédicat vrai.
+\item La \textbf{conservation} : la valeur logique de ce prédicat n'est pas modifée par l'éxécution de l'algorithme. Pour les boucles inconditionnelles, il peut être intéressant d'indexer le prédicat.
+\item La \textbf{terminaison} : une fois l'algorithme exécuté, l'invariant fournit une propriété utile à la preuve de la validité.
+\end{enumerate}
+
+\medskip \par Par exemple, pour les boucles conditionnelles et inconditionnelles :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+# H = invariant
+preconditions
+# H vrai
+while cond:
+    # Si H vrai
+    bloc_instructions
+    # alors H vrai
+# H vrai et cond fausse
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+(* H = invariant *)
+preconditions
+(* H vrai *)
+while cond do
+    (* Si H vrai *)
+    instruction
+    (* alors H vrai *)
+done;
+(* H vrai et cond fausse *)
+\end{lstlisting} \\
+\begin{lstlisting}[language=Python]
+# H(k) = invariant
+preconditions
+# H(deb) vrai
+for k in range(deb, fin):
+    # Si H(k) vrai
+    bloc_instructions
+    # alors H(k+1) vrai
+# H(fin) vrai
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+(* H(k) = invariant *)
+preconditions
+(* H(deb) vrai *)
+for k=deb to fin do
+    (* Si H(k) vrai *)
+    instruction
+    (* alors H(k+1) vrai *)
+done;
+(* H(fin+1) vrai *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Complexité}
+
+\par Prouver la terminaison et la validité d'un algorithme permet de s'assurer qu'il renvoie le résultat souhaité. En revanche, cela ne dit rien de son efficacité. L'étude de la complexité tente de pallier ce problème. La complexité reflète le temps pris (complexité temporelle) et la place occupée en mémoire (complexité spatiale) par l'éxécution d'un alogrithme.  L'étude de la complexité spatiale n'est pas au programme : on se contentera d'éviter la multiplication des listes, en essayant au maximum de faire des opérations en place.
+
+\medskip \par L'objectif serait de prédire le temps d'éxécution d'un algorithme pour une taille $n$ de données à traiter définie. Malheuresement, les multiples facteurs en jeu (architecture de l'ordinateur, gestion de la mémoire, puissance du processeur, ...) rendent le calcul très difficile.
+
+\medskip \par En dépit d'un calcul précis, on s'intéresse donc principalement à l'évolution de ce temps d'éxécution (tous autres facteurs égaux) en fonction de $n$. On procède de la façon suivante :
+
+\medskip \begin{enumerate}
+\item Choix d'un paramètre $n$ (\textit{e.g.} taille d'une liste, ...).
+\item Choix de l'unité (correspondant à l'étape la plus significative : nombre d'opérations élémentaires, nombre d'appels récursifs, ...).
+\item Choix de la nature de la complexité calculée : pire des cas, cas moyen, meilleur des cas, ... Bien souvent, on s'intéresse au pire des cas.
+\item Calcul. Il est fréquent de trouver une formule de récurrence. On peut alors utiliser différentes stratégies :
+    \begin{itemize}
+    \item S'intéresser à des cas particulers (\textit{e.g.} les $2^k$) puis conclure sur les autres cas en considérant la complexité croissante en fonction de $n$.
+    \item S'il existe $(a, b) \in \mathbb{R}^2$ tel que $a \neq 1$ et pour tout $n \in \mathbb{N}$, on ait $c_{n+1} = a \cdot c_n + b$. On note alors $l = \frac{b}{1 - a}$, qui donne $(c_{n+1} - l) = a \cdot (c_n - l)$, d'où $c_n = a^n \cdot (c_0 - l) + l$.
+    \item Utiliser le théorème maître.
+    \end{itemize}
+\item Conclusion selon le tableau suivant.
+\end{enumerate}
+
+\begin{center}
+\begin{tabular}{|c|c|} \hline
+Complexité & Appelation \\ \hline
+$O(1)$ & Constante \\ \hline
+$O(\log(n))$ & Logarithmique \\ \hline
+$O(n)$ & Linéaire \\ \hline
+$O(n \log(n))$ & Pseudo-linéaire \\ \hline
+$O(n^2)$ & Quadratique \\ \hline
+$O(n^p), \; p > 2$ & Polynomiale \\ \hline
+$O(2^n)$ & Exponentielle \\ \hline
+$O(n!)$ & Factorielle \\ \hline
+\end{tabular}
+\end{center}
+
+\medskip \par En pratique, la complexité pseudo-linéaire est la complexité maximale pour laquelle on peut espérer des résultats satisfaisants.
+
+\subsubsection{Théorème maître}
+
+Supposons qu'il existe $(a, b) \in \mathbb{N}^2\backslash\{(0, 0)\}$, $k \geq 2$ et $f \in \mathbb{R}^{\mathbb{N}}$  une fonction croissante tels que :
+\begin{equation*}
+\forall n \in \text{\textlbrackdbl} 2, + \infty \text{\textlbrackdbl}, \quad c_n =
+  a \: c_{\ceil{\frac{n}{k}}}
++ b \: c_{\floor{\frac{n}{k}}}
++ f(n)
+\end{equation*}
+On note $\alpha = \ln_k(a+b)$ et $\beta$ tel que $f(n) = O(n^\beta)$. Alors :
+\begin{itemize}
+\item $\beta > \alpha \quad \Rightarrow \quad c_n = 0(n^\beta)$
+\item $\beta = \alpha \quad \Rightarrow \quad c_n = 0(n^\alpha\ln(n))$
+\item $\beta < \alpha \quad \Rightarrow \quad c_n = 0(n^\alpha)$
+\end{itemize}
+
+
+\newpage \section{Tris}
+
+\subsection{Importance des tris}
+
+\par Il est possible d'améliorer de façon très significative la complexité d'un algorithme si les données d'entrée, de type séquentiel, sont triées. Les tris sont donc très couramment utilisés. Comme il en existe de nombreux types, cette section vise uniquement à présenter les tris usuels.
+
+\medskip \par Les algorithmes naïfs sont quadratiques (en prenant pour paramètre le nombre d'éléments à trier) tandis que les meilleurs tris généraux sont pseudo-linéaires. Il ne faut cependant pas émettre de trop grandes généralités : quelques hypothèses sur les données d'entrée permettent ainsi de réaliser un tri linéaire.
+
+\subsection{Tris naïfs}
+
+\subsubsection{Tri par insertion}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let inserer l x =
+    let rec aux l x mem insere =
+        if insere = true then
+            match mem with
+            | [] -> l;
+            | t::q -> aux (t::l) x q true
+        else
+            match l with
+            | [] -> aux (x::l) x mem true;
+            | t::q when x < t -> aux (x::l) x mem true;
+            | t::q -> aux q x (t::mem) false
+    in aux l x [] false;;
+
+let rec tri_insertion l =
+    match l with
+    | [] -> l;
+    | t::q -> inserer (tri_insertion q) t;; 
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Tris efficaces}
+
+\subsubsection{Tri fusion}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rec partage l =
+    match l with
+    | [] -> [], [];
+    | t::[] -> l, [];
+    | a::b::q -> let l1, l2 = partage q in a::l1, b::l2;;
+
+let rec fusion l1 l2 =
+    match l1, l2 with
+    | [], _ -> l2;
+    | _, [] -> l1;
+    | t1::q1, t2::q2 when t1 < t2 -> t1::(fusion q1 l2);
+    | t1::q1, t2::q2 -> t2::(fusion l1 q2);;
+
+let rec tri_fusion l =
+    let l1, l2 = partage l in
+        fusion (tri_fusion l1) (tri_fusion l2);;
+\end{lstlisting}
+\end{tabular}
+
+\subsubsection{Tri rapide}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let remplacer tab a b =
+    let tmp = tab.(a) in
+        begin
+            tab.(a) <- tab.(b);
+            tab.(b) <- tmp;
+        end;;
+
+let tri_rapide tab =
+    let rec aux tab i j =
+        if j > i then
+            let pivot = tab.(j) and f = ref i in
+            (* H(t) := les cases i..f-1 sont inferieures a pivot
+             *                   f..t-1 sont superieures a pivot*)
+                begin
+                    (* reorganisation des elements *)
+                    for t = i to j - 1 do
+                        if tab.(t) < pivot then
+                            begin
+                                remplacer tab !f t;
+                                incr f;
+                            end
+                    done;
+                    (* positionnement du pivot *)
+                    remplacer tab !f j;
+                    (* appels recursifs *)
+                    aux tab i (!f-1);
+                    aux tab (!f+1) j;
+                end
+    in aux tab 0 (Array.length tab - 1);;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Un tri linéaire}
+
+% Tri par dénombrement
+
+\par Supposons qu'il existe \code{vmax} tel que les données d'entrée soient un tableau à valeurs dans $\lentint 0; v_{max} \lentint$. On peut aisément montrer que l'algorithme suivant termine, est valide et linéaire.
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+def tri_lineaire(tab):
+    # Calcul du vmax
+    vmax = 0
+    for x in tab:
+        if x >= vmax:
+            vmax = x + 1
+    # Denombrement
+    comp = [0]*vmax
+    for x in tab:
+        comp[x] += 1
+    # Generation du resultat
+    res = []
+    for i in range(vmax):
+        for _ in range(comp[i]):
+            res.append(i)
+    return res
+\end{lstlisting}
+\end{tabular}
+
+% Tri par base
+
+
+\newpage \section{Arbres (OCaml)}
+
+\par Les arbres peuvent être implémentés de multiples manières, avec diverses notations. On s'intéresse donc plus aux notions classiques qu'à la retranscription des fonctions usuelles, qui varie selon l'implémentation. On retiendra principalement que les fonctions récursives utilisant le \textit{pattern-matching} sont omniprésentes. 
+
+\subsection{Implémentation classique}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+type tree =
+    | F of feuille;
+    | N of tree * racine * tree;;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Toute \textbf{racine} est donc \textbf{père} d'un \textbf{fils droit} et d'un \textbf{fils gauche}. On définit naturellement les notions d'ancêtres et de descendants.
+
+\medskip \par Les \textbf{noeuds} sont l'ensemble des \textbf{feuilles} (noeuds externes) et des \textbf{racines} des sous-arbres de l'arbre total (noeuds internes). La \textbf{profondeur} d'un noeud est le nombre de générations le séparant de la racine de l'arbre total (profondeur nulle pour la feuille des arbres feuilles). Les noeuds de même profondeur forment le \textbf{niveau} de profondeur associée. La \textbf{hauteur} d'un arbre correspond à la profondeur maximale de ses noeuds.
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Caml]
+let rec ni t =
+    (* nb de noeuds internes *)
+    match t with
+    | F f -> 0;
+    | N (g, r, d) ->
+        1 + (ni g) + (ni d);;
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec h t =
+    (* hauteur de l'arbre *)
+    match t with
+    | F f -> 0;
+    | N (g, r, d) ->
+        1 + max (h g) (h d);;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par On peut prouver par induction sur les arbres que pour tout arbre $T$ :
+$$nb\_feuilles(T) = nb\_racines(T) + 1$$
+$$h(T) + 1 \leq nb\_feuilles(T) \leq 2^{h(T)}$$
+
+\medskip \par Des terminaisons correpondent aux cas d'égalité. Ainsi, un arbre est dit \textit{peigne} si et seulement si $h(T) + 1 = nb\_feuilles(T)$, et \textit{complet} si et seulement si $nb\_feuilles(T) = 2^{h(T)}$.
+
+\subsection{Parcours}
+
+\par Parcourir un arbre est chose commune. Il y a plusieurs façons de le faire :
+\begin{itemize}
+\item les parcours dits \textbf{en largeur}, qui traite les noeuds par niveaux croissants.
+\item les parcours dits \textbf{en profondeur}, qui traite les noeuds par branches. Dans cette optique, on traite l'arbre \code{N (g, r, d)} en traitant récursivement les fils gauche \code{g} et droite \code{d}. On distingue les parcours préfixe, infixe, et postfixe selon que l'on traite la racine \code{r} avant, entre ou après les fils. 
+\end{itemize}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Caml]
+let parcours_largeur t =
+    let rec aux todo =
+        match todo with
+        | [] -> ();
+        | (F f)::q ->
+          begin
+            traiter_feuille f;
+            aux q;
+          end;
+        | (N (g, r, d))::q ->
+          begin
+            traiter_noeud r;
+            aux todo@[g; d];
+          end
+    in aux [t];;
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec parcours_prefixe t =
+    match t with
+    | F f -> traiter_feuille f;
+    | N (g, r, d) ->
+        begin
+            traiter_noeud r;
+            parcours_prefixe g;
+            parcours_prefixe d;
+        end;;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Il y a unicité des parcours préfixes et postfixes, ce qui les rends très intéressants. Le parcours postfixe est ainsi utilisé par la notation polonaise inversée (RPN), qui manipule une pile au lieu de représenter les expressions sous forme d'arbre. Montrons l'unicité par l'exhibition de la bijection réciproque :
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rec liste_prefixe t =
+    match t with
+    | F f -> [("F", f)];
+    | N (g, r, d) ->
+        ("N", r)::((liste_prefixe g)@(liste_prefixe d));;
+
+let inv l =
+    let rec aux l res =
+        match l with
+        | [] -> res;
+        | t::q -> aux q (t::res)
+    in aux l [];;
+
+let arbre_prefixe l =
+    let rec aux l res =
+        match l, res with
+        | [], t::[] -> t;
+        | ("F", f)::q, _ -> aux q ((F f)::res);
+        | ("N", r)::q1, g::d::q2 -> aux q1 ((N (g, r, d))::q2);
+        | _, _ -> failwith "Arbre invalide."
+    in aux (inv l) [];;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Un arbre est également parcourue lors de la recherche d'un élément ou d'un extremum :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Caml]
+let rec rech_elem x t =
+    match t with
+    | F f -> f = x;
+    | N (g, r, d) ->
+           (r = x)
+        || (rech_elem x g)
+        || (rech_elem x d);;
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec rech_max t =
+    match t with
+    | F f -> f;
+    | N (g, r, d) ->
+        let mg = rech_max g
+        and md = rech_max d in
+            max r (max mg md);;
+\end{lstlisting}
+\end{tabular}
+
+
+\subsection{Arbres binaires homogènes, ABR}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+type 'a arbre =
+    | Vide;
+    | N of ('a arbre) * 'a * ('a arbre);;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Les arbres binaires de recherche (ABR) sont des arbres binaires homogènes à valeurs dans un ensemble entièrement ordonné et dont le parcours infixe renvoie une liste croissante. Tout l'intêret des ABR apparaît lorsque la hauteur $h$ est minimale, car $h$ est alors de l'ordre de $\log_2(n)$, d'où des complexités logarithmiques pour les opérations élémentaires :
+\begin{itemize}
+\item Recherche d'un extremum.
+\item Recherche d'un élément.
+\item Insertion d'un élément.
+\item Suppression d'un élément.
+\end{itemize}
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rec rech_max_ABR t =
+    match t with
+    | N (_, r, Vide) -> r;
+    | N (_, _, g) -> rech_max_ABR g;;
+    | _ -> failwith "Arbre vide.";;
+
+let rec rech_elem_ABR x t =
+    match t with
+    | Vide -> false;
+    | N (g, r, d) when x < r -> rech_elem_ABR x g;
+    | N (g, r, d) when x > r -> rech_elem_ABR x d;
+    | _ -> true;;
+
+let rec inserer_ABR x t =
+    match t with
+    | Vide -> N (Vide, x, Vide);
+    | N (g, r, d) when x < r -> N (inserer_ABR x g, r, d);
+    | N (g, r, d) when x > r -> N (g, r, inserer_ABR x d);
+    | _ -> t;; 
+
+let rec fusion_ABR t tp =
+    match tp with
+    | Vide -> t;
+    | N (g, r, d) ->
+        inserer_ABR r (fusion_ABR (fusion_ABR t g) d);;
+
+let rec suppr_ABR x t =
+    match t with
+    | Vide -> failwith "Valeur non presente.";
+    | N (g, r, d) when x < r -> N (suppr_ABR x g, r, d);
+    | N (g, r, d) when x > r -> N (g, r, suppr_ABR x d);
+    | _ -> fusion_ABR g d;;
+\end{lstlisting}
+\end{tabular}
+
+\medskip \par Le maintien d'une hauteur minimale peut se faire par \textbf{rotations} droites et gauches, qui ne brisent pas le caractère ABR.
+
+\medskip \par L'insertion successive des éléments d'une liste (pseudo-linéaire) dans un ABR initialement vide, puis son parcours infixe (linéaire) est donc une façon optimale (pseudo-linéaire) de trier une liste !
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rec liste_infixe t =
+    match t with
+    | Vide -> [];
+    | N (g, r, d) -> (liste_infixe g)@[r]@(liste_infixe d);;
+
+let tri_ABR l =
+    let rec abr_of_list todo =
+        match todo with
+        | [] -> Vide;
+        | t::q -> inserer_ABR t (abr_of_list q)
+    in liste_infixe (abr_of_list l);;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Preuves par induction}
+
+On peur prouver la validité d'un prédicat $P$ par induction sur les arbres. Pour cela, il faut montrer dans le cas de l'implémentation classique (respectivement celles des arbres binaires homogènes) :
+\begin{itemize}
+\item $P$ est vrai pour tout arbre feuille (respectivement vide).
+\item $P$ est vrai pour tout arbre de forme \code{N (ta, r, tb)} où \code{r} est une racine quelquonque et \code{ta} et \code{tb} des arbres pour lesquels $P$ est vrai.
+\end{itemize}
+
+
+\newpage \section{Gestion de fichiers (Python)}
+
+\subsection{Création d'une connexion}
+
+\paragraph{\code{open(file: str, mode: str)}} création d'une connexion avec le fichier \code{file}. Il existe différents types de connexion, permettant d'accéder à différentes méthodes.
+
+\subsection{Types de connexion}
+
+\begin{center}\begin{tabular}{|c|c|c|} \hline
+\code{mode} & Signification & Description \\ \hline
+\code{'r'} & \textit{read} & Lecture seule \\ \hline
+\code{'w'} & \textit{write} & Ecriture (écrasement) \\ \hline
+\code{'a'} & \textit{append} & Ecriture (ajout en fin de fichier) \\ \hline
+\end{tabular}\end{center}
+
+\subsection{Méthodes}
+
+\begin{center}\begin{tabular}{|c|c|c|c|} \hline
+Méthode & Modes & Typage & Description \\ \hline
+\code{.close()} & Tous & \code{unit > unit} & Suppression de la connexion \\ \hline
+\code{.readlines()} & Lecture & \code{unit > str list} & Récupération des lignes \\ \hline
+\code{.readline()} & Lecture & \code{unit > str} & Récupération d'une ligne (itérateur) \\ \hline
+\code{.write(text: str)} & Ecriture & \code{str > unit} & Ecriture de \code{text} \\ \hline
+\end{tabular}\end{center}
+
+\subsection{Remarques}
+
+\begin{itemize}
+\item Une connexion ouverte doit être fermée !
+\item Les sauts de ligne sont à traiter manuellement. La méthode \code{.strip()} peut-être utile.
+\item Pour le traitement de fichiers \code{.csv}, la méthode \code{.split(separator: str)} peut-être utile.
+\end{itemize}
+
+
+\newpage \section{Modules Python}
+
+% https://docs.python.org/3/library/
+
+\subsection{Utilisation}
+
+\par Les modules suivants doivent être importés avant utilisation. Les différentes méthodes d'imports font varier la façon d'accéder aux éléments du module. La première méthode peut provoquer des \textit{collisions}. On choisira donc préférentiellement les méthodes deux et trois. 
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+from nom_module import obj[, obj]* # Acces aux objets : obj
+import nom_module # Acces aux objets: nom_module.obj
+import nom_module as surnom # Acces aux objets: surnom.obj
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{maths}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+ceil, floor, trunc # Approximation
+factorial, comb # Combinatoire
+gcd, lcm # Arithmetique
+exp, log # Exponentielle et logarithme naturel
+sqrt # Identique a **.5
+[a]cos[h], [a]sin[h], [a]tan[h] # Trigonometrie
+pi, e, tau # Constantes
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{random}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+randrange([start, ]stop[, step]) # Fonctionne comme range
+randint(start, stop) # Entier entre start et stop inclus
+choice(sequence) # Element de sequence
+random() # Flotant entre 0 et 1 exclus
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{time}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+monotonic() # Temps depuis une origine fixe quelconque
+time() # Temps depuis epoch
+sleep(n) # Suspend l'execution n secondes
+strftime(fmt: str) # Convertit localtime() en chaine de caractere
+                   # Utiliser les commandes ci-dessous
+                   # ex: 'Il est %H heure %M'
+\end{lstlisting}
+\end{tabular}
+
+\begin{center}
+\begin{tabular}{|c|c|} \hline
+Commande & Résultat \\ \hline
+\code{\%c} & Représentation usuelle (totale) \\ \hline
+\code{\%x} & Représentation usuelle (date) \\ \hline
+\code{\%X} & Représentation usuelle (heure) \\ \hline
+\code{\%Y} & Année \\ \hline
+\code{\%m} & Mois ($\lentint 01; 12 \rentint$) \\ \hline
+\code{\%d} & Jour du mois ($\lentint 01; 31 \rentint$) \\ \hline
+\code{\%H} & Heure ($\lentint 00; 23 \rentint$) \\ \hline
+\code{\%M} & Minute ($\lentint 00; 59 \rentint$) \\ \hline
+\code{\%s} & Seconde ($\lentint 00; 59 \rentint$) \\ \hline
+\code{\%A} & Jour de la semaine (nom) \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{\code{numpy}}
+
+% https://numpy.org/
+
+\par Introduit le type \code{ndarray}, qui diffère du type \code{list} :
+\begin{itemize}
+\item la taille des \code{ndarray} et le type de ses éléments sont fixés à la création des objets
+\item les opérations sont considérablement plus rapides et moins gourmandes en mémoire
+\item la multidimensionalité est mieux gérée
+\item les opérations vectorielles (éléments par éléments) sont possibles : \code{np.zeros(3)} + \code{1} correspond à \code{np.array([1, 1, 1])}
+\end{itemize}
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+array([[1, 2], [4, 5]]) # Creation d'un ndarray
+                        # Creation en comprehension possible
+zeros(taille) # Creation avec valeurs initialisees a zero
+identity(n) # Creation d'une matrice identite
+linspace(a, b, n) # Creation de n points uniformement repartis 
+any(cond), all(cond) # Verification d'un predicat sur une matrice
+sum(arr), prod(arr), transpose(arr), dot(arr1, arr2) # Operations
+arr[1, 1::] # Acces aux elements (slicing possible)
+arr.ndim # Dimension
+arr.shape # Taille selon les dimensions
+arr.copy() # Deepcopy
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{matplotlib.pyplot}}
+
+% https://matplotlib.org/stable/api/index.html#modules
+% https://github.com/matplotlib/cheatsheets
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+plot(x, y[, fmt: str]) # Trace une figure
+                       # Utiliser les commandes ci-dessous
+                       # ex: '.r'
+xlabel(name), ylabel(name) # Nommer les axes
+show() # Affiche la figure
+savefig(path) # Enregistre la figure
+imread(path) # Lecture de l'image sous forme de ndarray
+imshow(arr) # Affiche l'image deduite d'un ndarray
+imsave(path, arr) # Enregistre l'image
+\end{lstlisting}
+\end{tabular}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|} \hline
+Marqueur & Style de ligne & Lettre & Couleur \\ \hline
+\code{.} & Points & \code{k} & Noir \\ \hline
+\code{,} & Pixels & \code{b} & Bleu \\ \hline
+\code{x} & Croix & \code{g} & Vert \\ \hline
+\code{-} & Ligne continue & \code{r} & Rouge \\ \hline
+      :  & Ligne pointillée & \code{y} & Jaune \\ \hline
+\end{tabular}
+\end{center}
+
+\subsection{\code{turtle}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+forward(n) # Avance de n pixels
+right(d), left(d) # Tourne de d degres
+goto(x, y), setx(x), sety(y) # Defini la position
+penup(), pendown(), isdown() # Controle du stylo
+showturtle(), hideturtle() # Controle de la tortue
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{sqlite3}}
+
+\par Fonctionne de façon similaire à la gestion de fichiers.
+
+\medskip \begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+import sqlite3 as sql
+con = sql.connect(db_path) # Ouverture d'une connexion
+cur = con.cursor() # Creation d'un curseur
+cur.execute(query) # Requetage
+for row in cur: # Lecture du resultat de la requete
+    bloc_instructions
+con.commit() # Commit changes
+con.close() # Close the connexion
+\end{lstlisting}
+\end{tabular}
+
+
+\newpage \section{Modules OCaml}
+
+% https://www.ocaml.org/api/index.html
+
+\subsection{Utilisation}
+
+\par La majorité des modules suivants font partie de la librairie standard. Il suffit d'utiliser l'instruction \code{nom_module.objet} pour accéder aux objets de ces modules. Le module \code{Graphics} n'en fait partie : il faut donc importer le module (commandes à la section \code{Graphics}). 
+
+\subsection{\code{String}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+get s i (* Acces au caractere d'indice i, identique a s.[i] *)
+length s (* Longueur de s *)
+concat sep s_list (* Concatenation des chaines de s_list *)
+sub s debut longueur (* Acces a une sous-chaine *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{Array}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+length t (* Taille du tableau *)
+get t i (* Acces a l'element d'indice i, identique a t.(i) *)
+set t i x (* Ecriture de l'element i, identique a t.(i) <- x *)
+make n def (* Creation d'un tableau de taille n ou tous
+              les elements sont initialises a def *)
+make_matrix x y def (* Creation d'une matrice de format (x, y) *)
+sub t debut longueur (* Creation d'un sous-tableau *)
+copy t (* Deepcopy *)
+map f t (* Mapping *)
+fold_left f accu t (* Pliage a gauche *)
+sort f t (* Tri croissant selon f
+            ex: Array.sort (fun a b -> b - a) tab *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{List}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+type 'a list =
+    | []
+    | (::) of 'a * 'a list;;
+length l (* Taille de la liste *)
+hd l (* Acces au premier element *)
+tl l (* Acces au reste de la liste *)
+nth l i (* Acces a l'element d'indice i *)
+rev l (* Inversion de liste (non tail-recursive) *)
+append l1 l2 (* Concatenation des listes, identique a l1@l2 *)
+map f l (* Mapping *)
+fold_left f accu l (* Pliage a gauche *)
+sort f l (* Tri croissant selon f *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{Queue} (FIFO) et \code{Stack} (LIFO)}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+create (* Creation d'une file/pile *)
+push x q (* Ajoute un element *)
+is_empty q (* Verifie si la file/pile est vide *)
+pop q (* Supprime et renvoie l'element le plus
+             ancien (module Queue)
+          ou recent (module Stack) *)
+length q (* Taille de la file/pile *)
+clear q (* Vide la file/pile *)
+copy q (* Copie de la file/pile *)
+fold f accu q (* Pliage a gauche *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{Hashtbl}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+create n (* Creation d'une table de taille n *)
+mem table cle (* Test d'existence d'une valeur *)
+add table cle valeur (* Ajout d'une valeur *)
+find table cle (* Lecture d'une valeur *)
+remove table cle (* Suppression d'une valeur *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{Random}}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+int n (* Entier aleatoire entre 0 et n - 1 *)
+float f (* Flotant aleatoire entre 0 et f *)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\code{Graphics}}
+
+% https://ocaml.org/releases/4.07/htmlman/libref/Graphics.html
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+load "graphics.cma";; open Graphics;; (* Import du module *)
+open_graph "" (* Affiche l'ecran de trace *)
+moveto x y (* Defini la position du pointeur *)
+lineto x y (* Trace un trait de la position actuelle
+              a la position precisee (deplace le pointeur) *)
+close_graph () (* Supprime l'ecran de trace *)
+\end{lstlisting}
+\end{tabular}
+
+
+\newpage \section{Méthodes classiques}
+
+\subsection{Recherche d'extremum ou d'une valeur dans un tableau, une liste}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+def rech_max(l):
+    if len(l) == 0:
+        return None
+    else:
+        M = l[0]
+        for i in range(len(l)):
+            if l[i] > M:
+                M = l[i]
+        return M
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec rech_elem l x =
+    match l with
+    | [] -> false;
+    | t::q when t = x -> true;
+    | t::q -> rech_elem q x;;
+\end{lstlisting}
+\end{tabular}
+
+\par Dans le cas d'un tableau trié, on peut chercher de façon dichotomique:
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Caml]
+let rech_trie t x =
+    let rec aux i j =
+        if i > j then false
+        else let m = (i + j)/2 in
+            if t.(m) = x then true
+            else if t.(m) > x then aux (m + 1) j
+            else aux i (m - 1)
+    in aux 0 (Array.length t - 1);;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Exponentiation rapide}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+def expo(x, n):
+    if n == 0:
+        return 1
+    elif n%2 == 1:
+        return x * expo(x*x, n//2)
+    else:
+        return expo(x*x, n//2)
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let rec expo x n =
+    if n = 0 then 1
+    else if n mod 2 = 1 then
+        x * (expo (x*x) (n/2))
+    else
+        expo (x*x) (n/2);;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Décomposition en base $b$}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+def decomp(n, b):
+    if n == 0:
+        return []
+    else:
+        return decomp(n//b, b) + [n%b]
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let decomp n b =
+    let rec aux n =
+        if n = 0 then []
+        else [n mod b]::(aux (n/b))
+    in List.rev (aux n);;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Pivot de Gauss}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+def cherche_pivot(A, j):
+    maxi, indice = abs(A[j][j]), j
+    for i in range(j, len(A)):
+        if abs(A[i][j]) > maxi:
+            maxi, indice = abs(A[i][j]), i
+    return indice
+
+def echange(M, i1, i2):
+    M[i1], M[i2] = M[i2], M[i1]
+
+def transvection(M, i1, i2, mu):
+    for j in range(len(M[0])):
+        M[i1][j] = M[i1][j] + mu * M[i2][j]
+
+def dilatation(M, i, mu):
+    for j in range(len(M[0])):
+        M[i][j] = mu * M[i][j]
+
+def gauss(A, Y):
+    # Echelonnage 
+    for j in range(len(A)):
+        pivot = cherche_pivot(A, j)
+        echange(A, j, pivot)
+        echange(Y, j, pivot)
+        for k in range(j + 1, len(A)):
+            coef = - A[k][j] / A[j][j]
+            transvection(A, k, j, coef)
+            transvection(Y, k, j, coef)
+
+    # Diagonale de 1
+    for i in range(len(A)):
+        coef = 1 / A[i][i]
+        dilatation(A, i, coef)
+        dilatation(Y, i, coef)
+
+    # Remontee
+    for j in range(len(A) - 1, 0, -1):
+        for k in range(j):
+            coef = - A[k][j]
+            transvection(A, k, j, coef)
+            transvection(Y, k, j, coef)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Recherche de zéros}
+
+\par Soit une fonction $f$ définie et continue sur $I = [a; b]$ et telle que $f(a)\:f(b) \leq 0$. Par théorème des valeurs intermédiaires, il existe $\alpha \in I$ pour lequel $f$ s'annule. Approchons ce $\alpha$ :
+
+\begin{itemize}
+\item Si $f$ est strictement monotone : méthode dichotomique.
+\item Si $f$ est dérivable et sa dérivée est connue : méthode de Newton.
+$$ x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$
+\item Si $f$ est dérivable : méthode de la sécante.
+$$ x_{n+1} = x_n - \frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}f(x_n)$$
+\item Si on a $(a_0, b_0) \in I^2$ tels que $f(a_0)\:f(b_0) \leq 0$ et $|f(b_0)| \leq |f(a_0)|$ : méthode de Dekker :
+    \begin{enumerate}
+    \item On pose $b_{-1} = a_0$.
+    \item Tant que $|b_n - a_n| > eps$ :
+        \begin{enumerate}
+        \item On pose lorsque c'est possible $\alpha_n = b_n - \frac{b_n - b_{n-1}}{f(b_n) - f(b_{n-1})} f(b_n)$ et $\beta_n = \frac{a_n + b_n}{2}$. Si $\alpha_n$ n'est pas défini ou n'est pas compris entre $b_n$ et $\beta_n$, on pose $b_{n+1} = \beta_n$, sinon on pose $b_{n+1} = \alpha_n$.
+        \item Si $f(a_n)\:f(b_{n+1}) \leq 0$, on pose $a_{n + 1} = a_n$. Sinon, on pose $a_{n+1} = b_n$. On vérifie qu'on a ainsi $f(a_{n+1})\:f(b_{n+1}) \leq 0$.
+        \item Si $|f(a_{n+1})| < |f(b_{n+1})|$, on échange les valeurs de $a_{n+1}$ et $b_{n+1}$.
+        \end{enumerate}
+    \end{enumerate}
+\end{itemize}
+
+\medskip \par Seule la dichotomie donne une réponse systématique, mais sa vitesse de convergence n'est pas très bonne :
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+def dicho(f, a, b, eps):
+    c = (a + b)/2
+    if b - a < 2*eps:
+        return c
+    elif f(c) * f(a) <= 0:
+        return dicho(f, a, c, eps)
+    else:
+        return dicho(f, c, b, eps)
+
+def newton(f, f_, x0, eps): # Arret : x_{n+1} - x_n < eps
+    dx = f(x0)/f_(x0)
+    if dx < eps:
+        return x0
+    else:
+        return newton(f, f_, x0 - dx, eps)
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Equations différentielles}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+def euler(F, a, b, n, y0):
+    h = (b - a)/n
+    t, y = [a], [y0]
+    tc, yc = a, y0
+    for k in range(n):
+        yc, tc = yc + h * F(yc, tc), tc + h
+        y.append(yc)
+        t.append(tc)
+    plt.plot(t, y)
+    plt.show()
+    return t, y
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Intégration}
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+def integrale(f, a, b, n): # cf sommes de Riemann
+    s, h = 0, (b - a)/n
+    for i in range(n):
+        s += f(a + i*h)
+    return s*h
+\end{lstlisting}
+\end{tabular}
+
+\subsection{\textit{Backtracking}}
+
+\par Objectif : trouver une configuration valide pour un ensemble d'éléments à valeurs dans $E$ un ensemble fini et ordonné :
+
+\begin{enumerate}
+\item Lister dans \code{todo} les indices des éléments à trouver.
+\item Initialiser un indice \code{k} à \code{0}.
+\item Tant que $k$ est inférieur strict à \code{len(todo)} :
+    \begin{enumerate}
+    \item S'il n'y a pas de valeurs à l'indice \code{todo[k]}, y mettre la première valeur de $E$. Sinon, mettre la suivante. S'il n'y pas de valeurs suivante, c'est qu'aucune des valeurs de $E$ convient, \textit{i.e.} le début de configuration n'est pas valide, donc décrémenter $k$ et recommencer cette étape.
+    \item Si la configuration a une chance d'être valide, incrémenter $k$.
+    \end{enumerate}
+\item La solution est valide.
+\end{enumerate}
+
+\subsection{Méthode du rejet}
+
+\par Objectif : simuler un loi uniforme sur un sous-ensemble A de E :
+
+\begin{enumerate}
+\item Fonction fE simulant une loi uniforme sur E
+\item Faire une fonction qui utilise fE tant que l'object généré n'est pas dans A
+\end{enumerate}
+
+\subsection{Paradigmes}
+
+\begin{itemize}
+\item Diviser pour régner
+\item Algorithmes gloutons
+\item Programmation dynamique (bas en haut)
+\item Mémoïsation (haut en bas)
+\end{itemize}
+
+
+\newpage \section{Requêtes SQL}
+
+% https://sqlite.org/lang.html
+
+\par Les languages de requêtes structurées (\textit{Structured Query Language}) permettent de gérer efficacement des bases de données. Seule la requête \code{SELECT} est exigible en classes préparatoires.
+
+\subsection{\code{SELECT}}
+
+\begin{lstlisting}[language=SQL]
+SELECT [DISTINCT] [MIN|AVG|MAX|COUNT|SUM(]oid|*|column_name[)] [AS temp_name] [, ...]
+FROM table_name [AS temp_name]
+[JOIN table_name [AS temp_name] ON condition]*
+[WHERE condition]
+[GROUP BY column_name [HAVING condition]]
+[ORDER BY column_name [ASC|DESC] [, ...]]
+[LIMIT number_of_row];
+\end{lstlisting}
+
+\subsection{Conditions}
+
+\par Les conditions peuvent avoir plusieurs formats :
+
+\begin{lstlisting}[language=SQL]
+column_name ==|!=|<[=]|>[=] value
+column_name [NOT] IN (sql_statement)|(value [, ...])
+column_name [NOT] BETWEEN min_value AND max_value
+column_name IS [NOT] NULL
+column_name LIKE pattern
+\end{lstlisting}
+
+\par Les commandes \code{AND}, \code{OR} et \code{NOT} permettent de former des conditions plus complexes. Enfin, il est possible d'utiliser les \textit{fonctions d'aggrégation} (telles que \code{MIN} ou \code{AVG}) dans les conditions liées à \code{HAVING}. Elles agissent alors sur les regroupements créés par la commande \code{GROUP BY}.
+
+\medskip \par Les \textit{pattern} peuvent tirer profit des \textit{wildcards} suivantes :
+\begin{itemize}
+\item \code{_} représente un unique caractère
+\item \code{\%} représente une chaine de caractères quelquonque (éventuellement vide)
+\end{itemize}
+
+
+\newpage \section{\textit{Object Oriented Programming} (Python)}
+
+% https://docs.python.org/3/reference/datamodel.html
+
+\subsection{Généralités}
+
+\par Une classe permet de définir de nouveaux types d'objets, ainsi que leurs attributs et méthodes associées. L'utilisation de \textit{docstrings} est vivement recommandée.
+
+\begin{tabular}{l}
+\begin{lstlisting}[language=Python]
+class NomClasse: # Creation d'une classe
+
+    def nom_methode(self[, args]): # Definition d'une methode
+        pass
+
+a = NomClasse([args]) # Creation d'un objet
+a.attr # Acces a un attribut
+a.attr = value # Definition de l'attribut
+del a.attr # Suppression de l'attribut
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Méthodes spéciales}
+
+\par Python réserve certains noms de méthodes à des \textbf{méthodes spéciales}, appelées dans des contextes définis. La liste suivante présente les méthodes spéciales les plus fréquentes. Notons qu'il n'est pas nécessaire de définir toutes ces méthodes : une erreur \code{NotImplemented} sera levée lors d'un appel abusif. Le premier argument de ces méthodes est toujours \code{self}; on note \code{nbarg} le nombre d'arguments supplémentaires recquis par la méthode.
+
+\subsubsection{Général}
+
+\medskip \begin{center}
+\begin{tabular}{|c|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__init__} & $n$ & Appelé lors de la création d'un object. \\ \hline
+\code{__repr__} & 0 & \code{x} (dans le toplevel) \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Comparaison}
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__eq__} & 1 & \code{x == y} \\ \hline
+\code{__ne__} & 1 & \code{x != y} \\ \hline
+\code{__lt__} & 1 & \code{x < y} \\ \hline
+\code{__le__} & 1 & \code{x <= y} \\ \hline
+\code{__gt__} & 1 & \code{x > y} \\ \hline
+\code{__ge__} & 1 & \code{x >= y} \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Conversion de type}
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__bool__} & 0 & \code{bool(s)} \\ \hline
+\code{__int__} & 0 & \code{int(s)} \\ \hline
+\code{__str__} & 0 & \code{str(s)} \\ \hline
+\code{__float__} & 0 & \code{float(s)} \\ \hline
+\code{__complex__} & 0 & \code{complex(s)} \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Container}
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__len__} & 0 & \code{len(s)} \\ \hline
+\code{__getitem__} & 1 & \code{s[key]} \\ \hline
+\code{__delitem__} & 1 & \code{del s[key]} \\ \hline
+\code{__setitem__} & 2 & \code{s[key] = item} \\ \hline
+\code{__contains__} & 1 & \code{x in s} \\ \hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Itérateurs}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__iter__} & 0 & \code{for i in s:} \\ \hline
+\code{__next__} & 0 & \code{next(s)} \\ \hline
+\end{tabular}
+\end{center}
+
+\medskip \par Pour les itérateurs à support finis, on utilise l'instruction \code{raise StopIteration} dans la définition de \code{__next__}.
+
+\subsubsection{Maths}
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__add__} & 1 & \code{x} + \code{y} \\ \hline
+\code{__sub__} & 1 & \code{x - y} \\ \hline
+\code{__mul__} & 1 & \code{x * y} \\ \hline
+\code{__matmul__} & 1 & \code{x @ y} \\ \hline
+\code{__truediv__} & 1 & \code{x / y} \\ \hline
+\code{__floordiv__} & 1 & \code{x // y} \\ \hline
+\code{__mod__} & 1 & \code{x \% y} \\ \hline
+\code{__pow__} & 1 & \code{x ** y} \\ \hline
+\code{__lshift__} & 1 & \code{x << y} \\ \hline
+\code{__rshift__} & 1 & \code{x >> y} \\ \hline
+\code{__and__} & 1 & \code{x \& y} \\ \hline
+\code{__xor__} & 1 & \code{x ^ y} \\ \hline
+\code{__or__} & 1 & \code{x | y} \\ \hline
+\end{tabular}
+\end{center}
+
+\medskip \par En préfixant la méthode d'un \code{i}, on définit les opérateurs d'assignment associés. \code{__isub__} est ainsi appelé par \code{a -= 3}.
+
+\subsubsection{Opérateurs unaires}
+
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+Méthode & \code{nbarg} & Appel \\ \hline
+\code{__neg__} & 0 & \code{-x} \\ \hline
+\code{__abs__} & 0 & \code{abs(x)} \\ \hline
+\code{__round__} & 1 & \code{round(x, n)} \\ \hline
+\code{__trunc__} & 0 & \code{trunc(x)} \\ \hline
+\code{__floor__} & 0 & \code{floor(x)} \\ \hline
+\code{__ceil__} & 0 & \code{ceil(x)} \\ \hline
+\end{tabular}
+\end{center}
+
+\newpage \subsection{Un exemple: les arbres}
+
+\lstinputlisting[language=Python]{../archives/info/tree.py}
+
+
+\newpage \section{Astuces, élégance du code, vrac}
+
+\subsection{\code{PEP 8}}
+
+\par Python est un langage assez souple. Pour simplifier le partage du code et la démocratisation du langage, la \code{PEP 8} (\textit{Python Enhancement Proposal}) fixe des conventions lors de l'écriture de code Python. Un parcours rapide de son contenu (\href{https://www.python.org/dev/peps/pep-0008/}{accessible en ligne ici}) est vivement recommandé pour améliorer la clarté et la compréhensibilité du code.
+
+\subsection{Gestion des erreurs}
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+class CustomError(Exception):
+    pass
+raise error
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+exception CustomError;;
+
+raise error;;
+\end{lstlisting}
+\end{tabular}
+
+\par En OCaml, il est également possible de lancer des messages d'erreurs avec \code{failwith}, de typage \code{string > 'a} (s'adapte au reste de l'algorithme).
+
+\subsection{\textit{Unpacking}, \textit{packing}, utilisation de l'\textit{underscore}}
+
+\par La formation de tuples (\textit{packing}) et l'extraction des valeurs d'un tuple (\textit{unpacking}) sont des méchanismes fréquemment utilisés, parfois de façon non explicite, par exemple lors de l'échange de valeurs de deux variables :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+a, b = b, a
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let a, b = b, a;;
+\end{lstlisting}
+\end{tabular}
+
+\par Parfois, toutes les valeurs du tuple ne sont pas intéressantes : on peut alors utiliser l'\textit{underscore}, dont le fonctionnement est à rapprocher celui d'une variable jetable :
+
+\begin{tabular}{p{0.45\textwidth} p{0.45\textwidth}}
+\begin{lstlisting}[language=Python]
+a, _, b = 1, 2, 3
+
+for _ in range(42):
+    print("Hello World!")
+\end{lstlisting}
+&
+\begin{lstlisting}[language=Caml]
+let a, _, b = 1, 2, 3;;
+
+for _ = 1 to 42 do
+    print_string "Hello World!"
+done;;
+\end{lstlisting}
+\end{tabular}
+
+\subsection{Commandes Python utiles}
+
+\begin{itemize}
+\item Les \textit{f-string}, à utiliser à l'occasion des \code{exec}.
+\end{itemize}
+
+\subsection{Commandes OCaml utiles}
+
+\begin{itemize}
+\item \code{incr} et \code{decr} , de typage \code{int ref > unit}.
+\item \code{min} et \code{max} de typage \code{'a > 'a > 'a}.
+\end{itemize}
+
+\subsection{Conseils et notes}
+
+\begin{itemize}
+\item Commenter au préalable le code, puis le code lui-même.
+\item Commencer par réfléchir au typage de la fonction demandée.
+\item Penser à réutiliser les fonctions précédentes.
+\item Vérifier régulièrement la syntaxe.
+\item Eviter les conditions complexes.
+\end{itemize}
+
+\end{document}

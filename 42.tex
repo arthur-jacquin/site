@@ -1,0 +1,156 @@
+\title{42 dans une suite de 42 caractères}
+\author{Arthur Jacquin}
+\documentclass{hibiscus}
+
+\DeclareMathOperator{\bin}{bin}
+\DeclareMathOperator{\dec}{dec}
+\DeclareMathOperator{\suff}{suff}
+\DeclareMathOperator{\fact}{fact}
+\DeclareMathOperator{\Card}{Card}
+
+\begin{document}
+\maketitle
+
+\section{Énoncé du problème}
+
+On considère l'alphabet $\Sigma = \{0, 1\}$. Parmi les mots de longueur 42, quelle est la part de ceux contenant le facteur \code{101010} ?
+
+\section{Principe}
+
+\par \medskip Soient $I = \text{\textlbrackdbl} 0 ; 2^6 \text{\textlbrackdbl}$ et $N = \text{\textlbrackdbl} 6 ; 42 \text{\textrbrackdbl}$. On définit la position d'un facteur dans un mot comme la position de son dernier caractère.
+
+\par \medskip Comptons le nombre $C$ de cas favorables, correspondant au nombre de mots de longueur 42 contenant au moins une fois le facteur \code{101010}. Pour tout $n \in N$, on pose $c_n$ le nombre de mots de longueur 42 contenant le facteur \code{101010} pour la première fois en position $n$. On a bien $$ C = \sum_{k = 6}^{42}{c_k} $$
+
+\par \medskip Le problème est donc ramené au calcul des $c_k$. Pour les déterminer, on considère la négation de "contenir au moins une fois" qui est "ne pas contenir". On part ainsi de l'ensemble des mots de longueur 6 ne contenant pas le facteur \code{101010}, puis on construit progressivement les ensembles des mots (qui ne contiennent toujours pas \code{101010}) de longueur supérieures. Pour cela, il suffit de concatener à chaque mot de l'ensemble précédent une fois avec \code{1} et une fois avec \code{0} puis d'éliminer les mots contenant \code{101010}.
+
+\par \medskip On remarque qu'au cours de la construction, seuls les 6 derniers caractères des mots nous intéressent. En effet, les autres facteurs de longueur 6 sont, par construction, différents du facteur souhaité. Au lieu de considérer l'ensemble des mots, on peut donc se contenter de les rassembler et de les compter selon leurs 6 derniers caractères. La complexité spatiale, précedemment exponentielle, devient linéaire.
+
+\section{Résolution}
+
+\par \medskip On note :
+\begin{itemize}
+\item $\bin$ l'application associant à tout entier de $I$ son écriture binaire à 6 caractères, et $\dec$ sa bijection réciproque.
+\item $\mathcal{A}$ l'ensemble des mots formés par l'alphabet $\Sigma$.
+\item |.| l'application associant à tout mot de $\mathcal{A}$ sa longueur.
+\item $\suff_k$ l'application associant à tout mot de $\mathcal{A}$ son suffixe de longueur $k$.
+\item $\fact_m$ l'application associant à tout mot $m'$ de $\mathcal{A}$ $1$ si $m$ est facteur de $m'$ et $0$ sinon.
+\end{itemize}
+
+\par \medskip Pour tout $(n, i) \in N \times I$, on définit $$ T_n^i = \left \{ m \in \mathcal{A} \; \middle| \; |m| = n, \; \suff_6(m) = \bin(i), \; \fact_\text{\code{101010}}(m) = 0 \right \} $$
+
+\par \medskip Pour tout $i \in I$, on définit la suite $u_i$ telle que
+\begin{itemize}
+\item $u_i = 0$ si $i = 42$
+\item $u_i(6) = 1, \quad \forall n \geq 6, \; u_i(n+1) = u_{\floor{\frac{i}{2}}}(n) + u_{2^5 + \floor{\frac{i}{2}}}(n)$ sinon.
+\end{itemize}
+
+\par \medskip Montrons par récurrence que $ H_n := " \; \forall i \in I, \quad u_i(n) = \Card T_n^i \; " $ est vraie pour tout $n \in N$. $H_6$ est trivialement vraie. Soient $n \in N \backslash\{6\}$ tel que $H_{n-1}$ soit vraie et $i \in I$. Si $i = 42$, on a bien le résultat souhaité car $u_i = 0$. Sinon, on note \code{abcdef} l'écriture binaire de $i$. Alors tout mot $m$ de $T_n^i$ est tel que $\suff_7(m)$ est de la forme \code{pabcdef}, autrement dit $m$ est concaténation d'un mot de $T_{n-1}^{\dec(\text{\code{0abcde}})}$ ou de $T_{n-1}^{\dec(\text{\code{1abcde}})}$ et de \code{f}. Or $\dec(\text{\code{0abcde}}) = \floor{\frac{i}{2}}$ et $\dec(\text{\code{1abcde}}) = 2^5 + \floor{\frac{i}{2}}$. Réciproquement, toute combinaison fonctionne et les mots créés sont deux à deux distincts, d'où le résultat souhaité.
+
+\par \medskip Soit alors la suite $v$ telle que $v(6) = 1$ et $\forall n \geq 6, \; v(n+1) = u_{\floor{\frac{42}{2}}}(n) + u_{2^5 + \floor{\frac{42}{2}}}(n)$. On peut de même montrer que pour tout $n \in N$, $v(n)$ correspond au nombre de mots de longueur $n$ contenant le motif \code{101010} une unique fois, en position $n$. 
+
+\par \medskip Pour tout $n \in N$, considérer $c_n$ revient à considérer le nombre de mots permettant d'obtenir \code{101010} une unique fois en position $n$ ($v(n)$) ainsi que l'ensemble des mots de longueur $42 - n$ à concatener ($2^{42 - n}$), mots sur lesquels il n'existe pas de contraintes. On a alors : $$ c_n = 2^{42 - n} v(n) $$
+
+\par \medskip En sommant les termes : $$ C = \sum_{k = 6}^{42}{c_k} = 2^{42} \sum_{k = 6}^{42}{\frac{v(k)}{2^k}} $$
+
+\par \medskip En notant $P$ la probabilité d'obtention d'un mot contenant au moins une fois le facteur \code{101010} lors du tirage d'un mot aléatoire de longueur 42, on obtiens par équiprobabilité : $$ P = \sum_{k = 6}^{42}{\frac{v(k)}{2^k}} $$
+
+\section{Mise en \oe uvre algorithmique}
+
+Pour un $n$ fixé, on peut stocker les valeurs des $u_i(n)$ dans une liste indexée par $I$.
+
+\begin{lstlisting}[language=Python, caption=Dénombrement des cas favorables]
+# Initialisation
+total = 0
+act, new = [1]*64, [0]*64
+
+# Traitement
+for k in range(6, 42 + 1):
+    total += act[42] * 2**(42-k)
+    act[42] = 0
+    for i in range(32):
+        new[2*i] = new[2*i+1] = act[i] + act[32 + i]
+    act, new = new, [0]*64
+
+# Resultat
+print(total)
+\end{lstlisting}
+
+\section{Résultats}
+
+\par \medskip L'exécution de cet algorithme affiche \code{1660901974812}, d'où $P \simeq 0.37765$.
+
+\section{Version matricielle}
+
+\par \medskip Soient $I = \lentint 0, 2^6 \lentint$, $N = \lentint 6, 42 \rentint$, les matrices $A \in \matr_{2^6}$, $P \in \matr_{1, 2^6}$ et la suite $U$ de matrices dans $\matr_{2^6, 1}$ tels que pour tout $(i, j) \in I^2$ et $n \geq 6$ :
+
+\begin{equation*}
+\begin{aligned}
+a_{i+1, j+1} & =
+\begin{cases}
+1 \text{ si } i \neq 42 \text{ et } j \equiv \floor{\frac{i}{2}} \; [2^5] \\
+0 \text{ sinon}
+\end{cases} \\
+p_{1, j+1} & =
+\begin{cases}
+1 \text{ si } j \equiv \floor{\frac{42}{2}} \; [2^5] \\
+0 \text{ sinon}
+\end{cases} \\
+[U_6]_{i+1, 1} & = 1 \\
+U_{n+1} & = A \cdot U_n
+\end{aligned}
+\end{equation*}
+
+\par \medskip On montre par récurrence que pour tout $(n, i) \in N \times I$, $ [U_n]_{i+1, 1} = \Card T_n^i $. On a ainsi :
+$$ P = \sum_{k = 6}^{42}{\frac{[PU_k]_{1, 1}}{2^k}} $$
+
+\section{Version formule du crible (non terminée)}
+
+\par \medskip Soit $N = \lentint 6, 42 \rentint$. On définit les événements suivants :
+
+\begin{equation*}
+\begin{aligned}
+R & := \text{"Le mot contient le facteur \code{101010}"} \\
+\forall i \in N, \quad A_i & := \text{"Le facteur \code{101010} apparaît en position $i$"}
+\end{aligned}
+\end{equation*}
+
+\par \medskip On a alors :
+
+\begin{equation*}
+\begin{aligned}
+P(R) = P \left( \bigcup_{i \in N}{A_i} \right)
+= \sum_{S \in \mathcal{P}(N)}{(-1)^{\Card S + 1} \cdot P \left( \bigcap_{i \in S}{A_i} \right)}
+\end{aligned}
+\end{equation*}
+
+\par \medskip Il reste donc à déterminer le nombre de caractères fixés par une intersection de $A_i$. On note pour tout $t \in \lentint 1, 42 \rentint$ :
+\begin{itemize}
+\item l'événement $C_t := \text{"Le caractère en position $t$ est fixé par $\bigcap_{i \in S}{A_i}$"}$
+\item la quantité $d_t$ correspondant au nombre de positions pour lesquelles un facteur de longueur 6 affecte le caractère en position $t$.
+\end{itemize}
+
+\par \medskip On constate que $d_t = \min(t, 6, 43 - t)$ :
+\begin{center}\begin{tabular}{|r|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+$t$ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & $\cdots$ & 36 & 37 & 38 & 39 & 40 & 41 & 42 \\
+\hline
+$d_t$ & 1 & 2 & 3 & 4 & 5 & 6 & 6 & 6 & $\cdots$ & 6 & 6 & 5 & 4 & 3 & 2 & 1 \\
+\hline
+\end{tabular}\end{center}
+
+\par \medskip En passant par le complémentaire et en comptant le nombre de cas favorables :
+$$
+P(C_t) = 1 - P(\overline{C_t}) = 1 - \frac{\binom{42 - d_t}{\Card S}}{\binom{42}{\Card S}}
+= 1 - \frac{\binom{42 - \min(t, 6, 43 - t)}{\Card S}}{\binom{42}{\Card S}}
+$$
+
+\section{Généralisation}
+
+\par \medskip A venir... Idées de paramètres à modifier :
+\begin{itemize}
+\item Motif
+\item Taille du motif
+\item Taille de l'alphabet
+\end{itemize}
+
+\end{document}
