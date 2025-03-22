@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{TITLE}}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body {font: 16px monospace,monospace;}
+@media (max-width:320px) {body {font-size: 5vw;}}
+#body {margin: 3em auto 20em; max-width: 44em;}
+img {max-width: 100%;}
+pre, br, h1, h2, h3, ul, li, blockquote, p {margin: 0; padding: 0; font-size: 1em; line-height: 1.2em;}
+pre {overflow-x: scroll; font: monospace,monospace; background-color: #eee;}
+h1 {font-size: 1.4em;}
+h2 {font-size: 1.3em;}
+ul {list-style: none;}
+li::before {content: "* ";}
+blockquote::before {content: "> ";}
+a {text-decoration: none; color: #005386;}
+a::before {content: "=> ";}
+@media (prefers-color-scheme:dark) {
+    body {background-color: #000; color: #bdbdbd;}
+    pre {background-color: #111;}
+    a {color: #56c8ff;}
+    svg {filter: invert(1);}
+}
+</style>
+</head>
+<body>
+<div id="body">
+{{HTML_CONTENT}}
+</div>
+</body>
+</html>

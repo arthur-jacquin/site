@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>{{FEED_TITLE}}</title>
+<id>{{PROTOCOL}}://{{URL_BASE}}</id>
+<link rel="alternate" href="{{PROTOCOL}}://{{URL_BASE}}"/>
+<link rel="self" href="{{PROTOCOL}}://{{URL_BASE}}/{{URL_FEED_PATH}}" type="application/atom+xml"/>
+<author>
+    <name>{{AUTHOR_NAME}}</name>
+    <email>{{AUTHOR_EMAIL}}</email>
+</author>
+<updated>{{CURRENT_DATE}}T00:00:00Z</updated>
+{{FEED_ENTRIES}}
+</feed>
