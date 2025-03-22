@@ -1,0 +1,19 @@
+@h<p><svg width="88" height="40">
+@h<path d="m 0,16 0,24 24,0 0,-8 -16,0 0,-8 16,0 0,-8 z" fill="#222"/>
+@h<path d="m 32,0 0,40 8,0 0,-40 z" fill="#222"/>
+@h<path d="m 48,0 0,8 8,0 0,-8 z" fill="#222"/>
+@h<path d="m 48,16 0,24 8,0 0,-24 z" fill="#222"/>
+@h<path d="m 64,16 0,24 24,0 0,-8 -16,0 0,-8 16,0 0,-8 z" fill="#222"/>
+@h</svg></p>
+@h<br><br>
+# clic - command line interface companion
+
+clic.h is a single file header library for command line arguments parsing and automated help messages generation. It can also be used to generate SYNOPSIS and OPTIONS manual sections.
+
+Documentation and example are directly included in the header file.
+
+
+## Links
+
+=> clic.h source code
+=> https://github.com/arthur-jacquin/clic.h repository

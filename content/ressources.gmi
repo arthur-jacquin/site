@@ -1,0 +1,84 @@
+# Ressources
+
+
+Un saut de ressources qui me semblent intéressantes ou qui me plaisent.
+
+
+## Oeuvres
+
+### Ecrivains
+
+* Isaac Asimov
+
+### Films
+
+* Babylon
+* Minority Report
+
+
+## Technologie
+
+### Programmes/langages/license
+
+* GPLv3
+* C
+* musl
+* qbe compiler backend
+* make
+* sqlite
+* busybox
+* git
+* gemini protocol, gemtext
+* sourcehut
+
+### Systèmes d'exploitation
+
+* Plan 9
+=> https://drewdevault.com/2022/11/12/In-praise-of-Plan-9.html In praise of Plan 9
+* KISS Linux
+* OpenBSD
+* Alpine Linux
+
+### Blogs
+
+=> https://ploum.net
+=> https://drewdevault.com
+=> https://unixsheikh.com
+=> https://lukesmith.xyz
+
+
+## Articles
+
+Une sélection pas si restreinte, tirée des blogs cités plus haut, classée par thème.
+
+### Société
+
+=> https://ploum.net/2023-06-15-merdification.html De la merdification des choses
+=> https://ploum.net/le-silence-au-milieu-du-bruit/index.html Le silence au milieu du bruit
+=> https://lukesmith.xyz/articles/minimizing-liabilities-is-making-it/ Minimizing Liabilities Is Making It.
+
+### Philosophie de dévellopement
+
+=> https://suckless.org/philosophy/ suckless.org philosophy
+=> https://unixsheikh.com/articles/is-the-madness-ever-going-to-end.html Is the madness ever going to end?
+
+### Ordinateurs
+
+=> https://ploum.net/2022-12-03-reinventing-how-we-use-computers.html Reinventing How We Use Computers
+=> https://lukesmith.xyz/articles/only-use-old-computers/ Only Use Old Computers!
+
+### Email
+
+=> https://ploum.net/the-monstrosity-email-has-become/index.html The Monstrosity Email Has Become
+
+### Web, navigateurs
+
+=> https://drewdevault.com/2020/08/13/Web-browsers-need-to-stop.html Web browsers need to stop
+=> https://lukesmith.xyz/articles/every-web-browser-absolutely-sucks/ Every Web Browser Absolutely Sucks.
+=> https://unixsheikh.com/articles/choose-your-browser-carefully.html Choose your browser carefully
+
+### Autres
+
+=> https://lukesmith.xyz/articles/why-i-use-the-gpl-and-not-cuck-licenses/ Why I Use the GPL and Not Cuck Licenses
+=> https://unixsheikh.com/articles/social-networking-suck.html Social Networking Suck
+=> https://unixsheikh.com/articles/stop-submitting-to-social-conformity-and-use-your-brain-instead.html Stop submitting to social conformity and use your brain instead

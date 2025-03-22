@@ -1,0 +1,86 @@
+# jacquin.xyz
+
+Artiste à temps plein. Apprécie la lenteur et la simplicité.
+
+```
+     _
+   .~q`,
+  {__,  \
+      \' \
+       \  \
+        \  \
+         \  `._            __.__
+          \    ~-._  _.==~~     ~~--.._
+           \        '                  ~-.
+            \      _-   -_                `.
+             \    /       }        .-    .  \
+              `. |      /  }      (       ;  \
+                `|     /  /       (       :   '\
+                 \    |  /        |      /       \
+                  |     /`-.______.\     |~-.      \
+                  |   |/           (     |   `.      \_
+                  |   ||            ~\   \      '._    `-.._____..----..___
+                  |   |/             _\   \         ~-.__________.-~~~~~~~~~'''
+                .o'___/            .o______}
+```
+
+
+## Programmes
+
+=> edit.{{EXTENSION}} edit - simple text editor
+=> safe.{{EXTENSION}} safe - simple symmetric-key password encrypter
+=> clic.{{EXTENSION}} clic - command line interface companion
+=> gmip.{{EXTENSION}} gmip - gemtext presentation tool
+=> todo.{{EXTENSION}} todo - simple task manager
+=> gmi2html.{{EXTENSION}} gmi2html.awk
+=> minestorm.html minestorm
+=> https://github.com/arthur-jacquin/numworks-games numworks-games
+
+En cours :
+* grid - spreadsheet calculator
+* cc - C99 compiler
+* os - operating system
+
+
+## Blog
+
+=> paps_magnum.{{EXTENSION}} Accord mets et vin PAPSxMagnum
+=> profession_de_foi.{{EXTENSION}} Profession de foi
+=> verite.{{EXTENSION}} De la vérité
+=> biens_communs.{{EXTENSION}} Des biens communs
+=> middle_management.{{EXTENSION}} Contre le middle management
+
+### Building a graphical multi-user spreadsheet editor in Zig
+
+=> grid_series.{{EXTENSION}} Series homepage
+=> grid_introduction.{{EXTENSION}} Building a graphical multi-user spreadsheet editor in Zig, introduction
+=> multithreading_test.{{EXTENSION}} Trying out multithreading
+=> data_model.{{EXTENSION}} Laying the foundations for the data model
+=> client_architecture.{{EXTENSION}} Designing the client architecture
+=> managing_signals.{{EXTENSION}} Managing signals in a multithreaded environment
+
+
+## Art ASCII
+
+=> shadoks.txt shadoks
+=> jattelik.txt jattelik
+=> jattelika.txt jattelika
+=> mini_jattelik.txt mini_jattelik
+
+
+## Autres projets
+
+=> prepa.{{EXTENSION}} prepa
+=> https://github.com/arthur-jacquin/while-lang while-lang
+=> tipe.html tipe
+=> info.pdf info
+=> 42.pdf 42
+=> syracuse.pdf syracuse
+=> sql.pdf sql
+
+
+## Liens
+
+=> https://github.com/arthur-jacquin GitHub
+=> https://www.linkedin.com/in/arthur-jacquin/ LinkedIn
+=> mailto:arthur@jacquin.xyz Contact: arthur@jacquin.xyz

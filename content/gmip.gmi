@@ -1,0 +1,11 @@
+# gmip - gemtext presentation tool
+
+A gemtext to slideshow generator and viewer.
+
+
+## Links
+
+=> gmip.tar.gz source code (compressed tarball)
+=> https://github.com/arthur-jacquin/gmip repository
+@h<br>
+@h<script async id="asciicast-577542" src="https://asciinema.org/a/577542.js"></script>

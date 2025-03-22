@@ -1,0 +1,37 @@
+# Des biens communs
+
+## Créer des biens communs
+
+Mon but n'est pas la captation de richesses, mais la création de biens communs et le partage de connaissances. Je vise à créer davantage que je ne consomme.
+
+Les idées de réduction des dépendances, de prise d'autonomie m'attirent. Cela oriente les projets créatifs et les expérimentations auxquels j'aimerais participer :
+* faire sa propre nourriture
+* écrire une encyclopédie du permaculteur et des semences
+* vivre sans argent
+* vivre sans électronique
+* profiter des crises pour réinventer les façons de vivre
+* concevoir un modèle de gouvernance, d'état
+* écrire une encyclopédie du bricoleur
+* expérimenter le stockage et la revalorisation des "déchets"
+* construire une maison autonome
+* écrire une encyclopédie du forgeron
+* créer du lien entre les écolieux
+* animer un fablab/bibliothèque
+* se détacher de plus en plus des normes, ne pas craindre d'être différent
+
+
+## Produire un modèle unique
+
+Je suis pour la production de masse d'un modèle unique pour les biens et les outils de base. Ce modèle unique doit être conçu avec la simplicité comme valeur centrale.
+
+Combiner modèle unique et simplicité a de nombreux avantages : en plus de mettre tout le monde sur un pied d'égalité, cela facilite la production, l'usage, la durabilité, l'entretien et la réparabilité.
+
+Le fait de viser la simplicité favorise également la neutralité de l'objet. C'est vrai d'un point de vue esthétique : cela permet de concevoir des styles intemporels, en évitant les connotations religieuses ou idéologiques.
+
+C'est aussi vrai d'un point de vue des contextes d'utilisation : plutôt que d'exiger un outil conçu spécifiquement pour une tâche, on peut essayer de combiner des outils génériques et polyvalents pour atteindre l'objectif.
+
+> Lien : philosophie UNIX
+
+Ces biens et outils étant fondamentaux, l'accès à ces ressources pourrait être garanti par l'état en nationalisant la production, ce qui réindustrialise et augmente la souveraineté.
+
+> Lien : philosophie communiste

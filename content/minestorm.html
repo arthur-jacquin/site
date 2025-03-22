@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>MINESTORM</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    background-color: black;
+}
+#game_canvas {
+    display: block; box-sizing: border-box;
+    border: solid .3em #555; border-radius: 1em;
+    height: 100%;
+    margin: auto;
+    background-color: black;
+}
+@media (max-aspect-ratio: 5/8) {
+    #game_canvas {width: 100%; height: auto;}
+}
+</style>
+</head>
+<body>
+<canvas id="game_canvas" width=500 height=800></canvas>
+<script>
+// CONSTANTS
+
+const FRAMES_PER_SECOND = 60;
+const DT = 1/FRAMES_PER_SECOND;
+
+const PADDING = 50; // MINE_SIZE[0]
+const CANVAS = document.getElementById("game_canvas");
+const WIDTH = CANVAS.width - 2*PADDING;
+const HEIGHT = CANVAS.height - 2*PADDING;
+
+const DOT_R = .5;
+const BULLET_R = 1.5;
+
+const LOG2 = [0, 1, 2, 2, 3, 3, 3, 3];
+const POW2 = [1, 2, 4, 8];
+const PI = Math.PI;
+
+
+
+
+// GRAPHICS
+
+function get_ctx() {
+    const ctx = CANVAS.getContext("2d");
+    ctx.strokeStyle = "white";
+    ctx.fillStyle = "white";
+    return ctx;
+}
+
+function draw_dot(p, r) {
+    const ctx = get_ctx();
+    ctx.beginPath();
+    const [x, y] = p;
+    ctx.arc(x, y, r, 0, 2*PI);
+    ctx.stroke();
+    ctx.fill();
+}
+
+function draw_polyline(points) {
+    const ctx = get_ctx();
+    var [x, y] = points[0];
+    ctx.moveTo(x, y);
+    for (var i = 1; i < points.length; i++) {
+        var [x, y] = points[i];
+        ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+const EXPLOSION_DURATION        = .2;
+const EXPLOSION_LENGTHS         = [0.47, 1.0, 0.62, 1.0, 0.26, 0.68, 0.95, 0.59, 0.69, 0.78, 0.42];
+const EXPLOSION_THETAS          = [6.28, 5.93, 5.41, 4.97, 4.19, 3.67, 3.14, 2.27, 1.57, 1.05, 0.61];
+const EXPLOSION_MAX_SIZE        = 100;
+
+function draw_explosion(x, y, time_left) {
+    const ctx = get_ctx();
+    const size = EXPLOSION_MAX_SIZE*
+        (EXPLOSION_DURATION - time_left)/EXPLOSION_DURATION;
+    for (var i = 0; i < EXPLOSION_LENGTHS.length; i++) {
+        var [dx, dy] = polar(EXPLOSION_LENGTHS[i]*size, EXPLOSION_THETAS[i]);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx, y + dy);
+    }
+    ctx.stroke();
+}
+
+function draw_noise(x, y, r) {
+    const ctx = get_ctx();
+    for (var i = 0; i < 10; i++) {
+        var [dx, dy] = polar(r*(1 + Math.random())/2, Math.random()*2*PI);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dx, y + dy);
+    }
+    ctx.stroke();
+}
+
+function print_lives_and_score() {
+    const ctx = get_ctx();
+    ctx.font = "18px 'Courier New'";
+    for (var i = 0; i < metadata.lives; i++) {
+        ctx.fillText("X", CANVAS.width - 40 - 18*i, CANVAS.height - 20);
+    }
+    const score_string = String(metadata.score % 1000000).padStart(7, '0');
+    ctx.fillText(score_string, CANVAS.width - 105, 35);
+}
+
+
+
+// UTILITIES
+
+function add(p, q) {
+    return [p[0]+q[0], p[1]+q[1]];
+}
+
+function scale(p, lambda) {
+    return [lambda*p[0], lambda*p[1]];
+}
+
+function generate_scaled_polyline(shape, origin, size, close) {
+    const polyline = new Array();
+    for (var i = 0; i < shape.length; i++) {
+        polyline.push(add(origin, scale(shape[i], size)));
+    }
+    if (close) {
+        polyline.push(add(origin, scale(shape[0], size)));
+    }
+    return polyline;
+};
+
+function polar(r, angle) {
+    return [r*Math.cos(angle), r*Math.sin(angle)];
+}
+
+function rotate(p, angle) {
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+    return [p[0]*c - p[1]*s, p[0]*s + p[1]*c];
+}
+
+function squared_dist(p, q) {
+    return (q[0] - p[0])**2 + (q[1] - p[1])**2;
+}
+
+function orientation(p, q, r) {
+    return (q[1]-p[1])*(r[0]-q[0]) < (q[0]-p[0])*(r[1]-q[1]);
+}
+
+function check_cross(p0, q0, p1, q1) {
+    return (orientation(p0, q0, p1) != orientation(p0, q0, q1)) &&
+        (orientation(p1, q1, p0) != orientation(p1, q1, q0));
+}
+
+function check_collision(poly0, center0, size0, poly1, center1, size1) {
+    // first bounding circle check
+    if (squared_dist(center0, center1) > (size0 + size1)**2) {
+        return false;
+    }
+    for (var i = 1; i < poly0.length; i++) {
+        for (var j = 1; j < poly1.length; j++) {
+            if (check_cross(poly0[i-1], poly0[i], poly1[j-1], poly1[j])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function relative_circular_distance(a, b, l) {
+    return b - a + (Math.abs(b - a) < l/2 ? 0 : (a < b ? -l : l));
+}
+
+
+
+// Mine()
+
+const MINE_STATE_HIDDEN         = 0;
+const MINE_STATE_PLACEMENT      = 1;
+const MINE_STATE_TIMING         = 2;
+const MINE_STATE_INACTIVE       = 3;
+const MINE_STATE_ACTIVATION     = 4;
+const MINE_STATE_ACTIVE         = 5;
+const MINE_STATE_DESTRUCTION    = 6;
+
+const MINE_PLACEMENT_SPEED      = 200;
+const MINE_ACTIVATION_DURATION  = .7;
+const MINE_SPEED                = [50, 75, 100];
+const MINE_SIZE                 = [50, 25, 12.5];
+const MINE_DESTRUCTION_DURATION = 1.5;
+
+const MINE_TYPE_FLOATING        = 0;
+const MINE_TYPE_FIREBALL        = 1;
+const MINE_TYPE_MAGNETIC        = 2;
+const MINE_TYPE_MAGNETIC_FIREBALL = 3;
+
+const MINE_DESTRUCTION_SCORE    = [
+    [100, 135, 200],
+    [325, 360, 425],
+    [500, 535, 600],
+    [750, 785, 850],
+];
+
+const MINE_SHAPES = new Array(4);
+for (var i = 0; i < 4; i++) {
+    MINE_SHAPES[i] = new Array();
+}
+for (var i = 0; i < 6; i++) {
+    MINE_SHAPES[MINE_TYPE_FLOATING].push(polar(i%2 ? 1 : 1/4, PI/3*i + PI/6));
+}
+for (var i = 0; i < 8; i++) {
+    MINE_SHAPES[MINE_TYPE_FIREBALL].push(polar(i%2 ? 1 : 1/2, PI/4*i));
+    MINE_SHAPES[MINE_TYPE_MAGNETIC].push(polar(i%2 ? 1 : 1/4, PI/4*i));
+    MINE_SHAPES[MINE_TYPE_MAGNETIC_FIREBALL].push(polar(i%2 ? 1 : 1/2, PI/4*i + (i%2 ? PI/6 : PI/3)));
+}
+
+function Mine(index) {
+    this.index = index;
+
+    this.init = function (type, generation) {
+        this.state = MINE_STATE_HIDDEN;
+        this.type = type;
+        this.generation = generation;
+        this.x0 = PADDING + Math.random()*WIDTH;
+        this.y0 = PADDING + Math.random()*HEIGHT;
+        this.theta = Math.random()*2*PI;
+    };
+
+    this.init_placement = function () {
+        this.state = MINE_STATE_PLACEMENT;
+        this.x = PADDING + WIDTH/2;
+        this.y = this.y0;
+    };
+
+    this.init_timing = function (time_left) {
+        this.state = MINE_STATE_TIMING;
+        this.time_left = time_left;
+    };
+
+    this.init_activation = function () {
+        this.state = MINE_STATE_ACTIVATION;
+        this.time_left = MINE_ACTIVATION_DURATION;
+    };
+
+    this.init_destruction = function () {
+        this.state = MINE_STATE_DESTRUCTION;
+        this.time_left = EXPLOSION_DURATION;
+        // activate child mines
+        if (this.index%8 < 4) {
+            mines[this.index + this.index%8 + 0].init_activation();
+            mines[this.index + this.index%8 + 1].init_activation();
+        }
+        // activate fireball
+        if (this.type%2 === 1) {
+            fireballs[this.index].init(this.x, this.y);
+        }
+        // activate mine layer
+        if (this.generation === 1) {
+            // TODO: check_mine_layer_additional();
+        }
+        metadata.score += MINE_DESTRUCTION_SCORE[this.type][this.generation];
+    };
+
+    this.can_collide = function () {
+        return (this.state === MINE_STATE_ACTIVATION ||
+                this.state === MINE_STATE_ACTIVE);
+    };
+
+    this.sphere = function () {
+        return [[this.x, this.y], MINE_SIZE[this.generation]];
+    };
+
+    this.collision_polyline = function () {
+        return generate_scaled_polyline(MINE_SHAPES[this.type],
+            [this.x, this.y], MINE_SIZE[this.generation], 1);
+    };
+
+    this.draw = function () {
+        if (this.state === MINE_STATE_HIDDEN) return;
+        draw_dot([this.x, this.y], DOT_R);
+        if (this.can_collide()) {
+            draw_polyline(this.collision_polyline());
+        }
+        if (this.state === MINE_STATE_DESTRUCTION) {
+            draw_explosion(this.x, this.y, this.time_left);
+        }
+    };
+
+    this.update = function () {
+        if (this.state === MINE_STATE_HIDDEN) {
+        } else if (this.state === MINE_STATE_PLACEMENT) {
+            if (Math.abs(this.x0 - this.x) <= DT*MINE_PLACEMENT_SPEED) {
+                this.state = MINE_STATE_INACTIVE;
+                this.x = this.x0;
+                check_mines_placement();
+            } else {
+                this.x += DT*MINE_PLACEMENT_SPEED*(this.x < this.x0 ? 1 : -1);
+            }
+        } else if (this.state === MINE_STATE_TIMING) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.init_activation();
+            }
+        } else if (this.state === MINE_STATE_ACTIVATION) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.state = MINE_STATE_ACTIVE;
+            }
+        } else if (this.state === MINE_STATE_ACTIVE) {
+            if (this.type > 1) {
+                const dx = relative_circular_distance(this.x, ship.x, WIDTH);
+                const dy = relative_circular_distance(this.y, ship.y, HEIGHT);
+                this.theta = Math.atan2(dy, dx);
+            }
+            const [dx, dy] = polar(DT*MINE_SPEED[this.generation], this.theta);
+            this.x = (this.x + dx - PADDING + WIDTH)%WIDTH + PADDING;
+            this.y = (this.y + dy - PADDING + HEIGHT)%HEIGHT + PADDING;
+        } else if (this.state === MINE_STATE_DESTRUCTION) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.state = MINE_STATE_HIDDEN;
+            }
+        }
+        return this;
+    };
+}
+
+
+
+// ship
+
+const SHIP_STATE_HIDDEN         = 0;
+const SHIP_STATE_ACTIVE         = 1;
+const SHIP_STATE_DESTRUCTION    = 2;
+
+const SHIP_ANGULAR_SPEED        = 1.8*PI;
+const SHIP_ACCELERATION_TAU     = 3;
+const SHIP_DECCELERATION_TAU    = 0.4;
+const SHIP_MAX_SPEED            = 120;
+const SHIP_RELOAD_DURATION      = 0.15;
+const SHIP_TELEPORT_DURATION    = 0.2;
+
+const SHIP_SHAPE = [
+    [-2.5, -5],
+    [-12.5, -5],
+    [-2.5, 2.5],
+    [12.5, 0],
+    [-2.5, -2.5],
+    [-12.5, 5],
+    [-2.5, 5],
+];
+const SHIP_SIZE = 12.5;
+
+const ship = {
+    state: SHIP_STATE_HIDDEN,
+
+    init: function () {
+        this.state = SHIP_STATE_ACTIVE;
+        this.x = PADDING + WIDTH/2;
+        this.y = PADDING + HEIGHT/2;
+        this.theta = -PI/2;
+        this.vx = 0;
+        this.vy = 0;
+        this.reload_time_left = 0;
+        this.teleport_time_left = 0;
+        this.bullet_index = 0;
+    },
+
+    init_destruction: function () {
+        this.state = SHIP_STATE_DESTRUCTION;
+        this.time_left = EXPLOSION_DURATION;
+    },
+
+    can_collide: function () {
+        return this.state === SHIP_STATE_ACTIVE;
+    },
+
+    sphere: function () {
+        return [[this.x, this.y], SHIP_SIZE];
+    },
+
+    collision_polyline: function () {
+        const polyline = new Array();
+        for (var i = 0; i < SHIP_SHAPE.length; i++) {
+            polyline.push(add([this.x, this.y],
+                rotate(SHIP_SHAPE[i], this.theta)));
+        }
+        return polyline;
+    },
+
+    draw: function () {
+        if (this.state === SHIP_STATE_HIDDEN) return;
+        if (this.state === SHIP_STATE_ACTIVE) {
+            draw_polyline(this.collision_polyline());
+        } else if (this.state === SHIP_STATE_DESTRUCTION) {
+            draw_explosion(this.x, this.y, this.time_left);
+        }
+        // TODO: teleportation hint
+    },
+
+    update: function () {
+        if (this.state === SHIP_STATE_HIDDEN) {
+        } else if (this.state === SHIP_STATE_ACTIVE) {
+            if (this.reload_time_left > 0) {
+                this.reload_time_left -= DT;
+            } else if (input_state.fire_down) {
+                this.reload_time_left = SHIP_RELOAD_DURATION;
+                this.bullet_index = (this.bullet_index + 1)%bullets.length;
+                bullets[this.bullet_index].fire();
+            }
+            if (this.teleport_time_left > 0) {
+                this.teleport_time_left -= DT;
+            } else if (input_state.teleport_down) {
+                this.teleport_time_left = SHIP_TELEPORT_DURATION;
+                this.x = PADDING + Math.random()*WIDTH;
+                this.y = PADDING + Math.random()*HEIGHT;
+                this.theta = -PI/2;
+                this.vx = 0;
+                this.vy = 0;
+            }
+            this.theta += DT*input_state.rotation_command*SHIP_ANGULAR_SPEED;
+            const [vx, vy] = polar(input_state.thrust_down ? SHIP_MAX_SPEED :
+                0, this.theta);
+            const alpha = 1 - DT/SHIP_ACCELERATION_TAU;
+            const beta = 1 - DT/SHIP_DECCELERATION_TAU;
+            this.vx = alpha*this.vx*beta + (1 - alpha)*vx;
+            this.vy = alpha*this.vy*beta + (1 - alpha)*vy;
+            const [dx, dy] = [this.vx, this.vy];
+            this.x = (this.x + dx - PADDING + WIDTH)%WIDTH + PADDING;
+            this.y = (this.y + dy - PADDING + HEIGHT)%HEIGHT + PADDING;
+        } else if (this.state === SHIP_STATE_DESTRUCTION) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.state = SHIP_STATE_HIDDEN;
+                metadata.fail_stage();
+            }
+        }
+        return this;
+    },
+};
+
+
+
+// mine_layer
+
+const LAYER_STATE_HIDDEN        = 0;
+const LAYER_STATE_INIT          = 1;
+const LAYER_STATE_ADDITIONAL    = 2;
+const LAYER_STATE_DESTRUCTION   = 3;
+
+const LAYER_INIT_SPEED          = 200;
+const LAYER_EXTERNAL_SHAPE      = [
+    [-.29, .32],
+    [-.47, .39],
+    [-.97, .25],
+    [-.29, -.17],
+    [.29, -.17],
+    [.97, .25],
+    [.47, .39],
+    [.29, .32],
+];
+const LAYER_POLYLINES           = [
+    [ // external shape
+        [-.25, .25],
+        [-.29, .25],
+        [-.29, .32],
+        [-.47, .39],
+        [-.97, .25],
+        [-.29, -.17],
+        [.29, -.17],
+        [.97, .25],
+        [.47, .39],
+        [.29, .32],
+        [.29, .25],
+        [.25, .25],
+    ],
+    [
+        [-.41, .12],
+        [-.29, .32],
+    ],
+    [
+        [-.41, .05],
+        [-.29, .25],
+    ],
+    [
+        [.41, .12],
+        [.29, .32],
+    ],
+    [
+        [.41, .05],
+        [.29, .25],
+    ],
+    [ // internal shape
+        [-.97, .25],
+        [-.41, .12],
+        [-.41, .05],
+        [-.29, .05],
+        [-.29, .12],
+        [-.23, .32],
+        [.23, .32],
+        [.29, .12],
+        [.29, .05],
+        [.41, .05],
+        [.41, .12],
+        [.97, .25],
+    ],
+    [
+        [-.29, .12],
+        [.29, .12],
+    ],
+    [ // opening
+        [-.23, -.09],
+        [-.23, .05],
+        [.23, .05],
+        [.23, -.09],
+        [-.23, -.09],
+    ],
+    [
+        [-.23, -.09],
+        [-.17, .05],
+    ],
+    [
+        [.23, -.09],
+        [.17, .05],
+    ],
+];
+const LAYER_DEFAULT_SIZE        = 50;
+
+const LAYER_DESTRUCTION_SCORE   = 1000;
+
+const mine_layer = {
+    state: LAYER_STATE_HIDDEN,
+
+    init: function () {
+        this.state = LAYER_STATE_INIT;
+        this.x = PADDING + WIDTH/2;
+        this.y = PADDING;
+    },
+
+    init_additional: function () {
+        // TODO
+    },
+
+    init_destruction: function () {
+        this.state = LAYER_STATE_DESTRUCTION;
+        this.time_left = EXPLOSION_DURATION;
+    },
+
+    size: function () {
+        return (this.state === LAYER_STATE_INIT) ?
+            (1 - (1 - .1)*(this.y - PADDING)/HEIGHT)*WIDTH/2 :
+            LAYER_DEFAULT_SIZE;
+    },
+
+    can_collide: function () {
+        return this.state === LAYER_STATE_ADDITIONAL;
+    },
+
+    sphere: function () {
+        return [[this.x, this.y], this.size()];
+    },
+
+    collision_polyline: function () {
+        return generate_scaled_polyline(LAYER_EXTERNAL_SHAPE, [this.x, this.y],
+            this.size(), 1);
+    },
+
+    draw: function () {
+        if (this.state === LAYER_STATE_HIDDEN) return;
+        if (this.state === LAYER_STATE_INIT ||
+            this.state === LAYER_STATE_ADDITIONAL) {
+            const size = this.size();
+            for (var i = 0; i < LAYER_POLYLINES.length; i++) {
+                draw_polyline(generate_scaled_polyline(LAYER_POLYLINES[i],
+                    [this.x, this.y], size, 0));
+            }
+        } else if (this.state === LAYER_STATE_DESTRUCTION) {
+            draw_explosion(this.x, this.y, this.time_left);
+        }
+    },
+
+    update: function () {
+        if (this.state === LAYER_STATE_HIDDEN) {
+        } else if (this.state === LAYER_STATE_INIT) {
+            this.y += DT*LAYER_INIT_SPEED;
+            for (var i = 0; i < mines.length; i++) {
+                if (mines[i].state === MINE_STATE_HIDDEN &&
+                    this.y > mines[i].y0) {
+                    mines[i].init_placement();
+                }
+            }
+            if (this.y > PADDING + HEIGHT) {
+                this.state = LAYER_STATE_HIDDEN;
+            }
+        } else if (this.state === LAYER_STATE_ADDITIONAL) {
+            // TODO
+        } else if (this.state === LAYER_STATE_DESTRUCTION) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.state = LAYER_STATE_HIDDEN;
+            }
+        }
+        return this;
+    },
+};
+
+
+
+// Bullet()
+
+const BULLET_REACH              = 400;
+const BULLET_SPEED              = 800;
+
+function Bullet() {
+    this.valid = false;
+
+    this.fire = function () {
+        this.valid = true;
+        this.x = ship.x;
+        this.y = ship.y;
+        this.theta = ship.theta;
+        this.distance_left = BULLET_REACH;
+    };
+
+    this.init_destruction = function () {
+        this.valid = false;
+    }
+
+    this.can_collide = function () {
+        return this.valid;
+    };
+
+    this.sphere = function () {
+        return [[this.x, this.y], 2*DT*BULLET_SPEED];
+    };
+
+    this.collision_polyline = function () {
+        return [[this.x, this.y], add([this.x, this.y],
+            polar(2*DT*BULLET_SPEED, this.theta + PI))];
+    };
+
+    this.draw = function () {
+        if (!this.valid) return;
+        draw_dot([this.x, this.y], BULLET_R);
+    };
+
+    this.update = function () {
+        this.distance_left -= DT*BULLET_SPEED;
+        if (this.distance_left < 0) {
+            this.valid = false;
+        }
+        if (!this.valid) return this;
+        const [dx, dy] = polar(DT*BULLET_SPEED, this.theta);
+        this.x = (this.x + dx - PADDING + WIDTH)%WIDTH + PADDING;
+        this.y = (this.y + dy - PADDING + HEIGHT)%HEIGHT + PADDING;
+        return this;
+    };
+}
+
+const FIREBALL_STATE_HIDDEN     = 0;
+const FIREBALL_STATE_ACTIVE     = 1;
+const FIREBALL_STATE_DESTRUCTION = 2;
+
+const FIREBALL_SIZE             = 8;
+const FIREBALL_SPEED            = 250;
+
+const FIREBALL_DESTRUCTION_SCORE = 110;
+
+function Fireball(type) {
+    this.state = FIREBALL_STATE_HIDDEN;
+
+    this.init = function (x, y) {
+        this.state = FIREBALL_STATE_ACTIVE;
+        this.x = x;
+        this.y = y;
+        const dx = relative_circular_distance(x, ship.x, WIDTH);
+        const dy = relative_circular_distance(y, ship.y, HEIGHT);
+        this.theta = Math.atan2(dy, dx);
+    };
+
+    this.init_destruction = function () {
+        this.state = FIREBALL_STATE_DESTRUCTION;
+        this.time_left = EXPLOSION_DURATION;
+        metadata.score += FIREBALL_DESTRUCTION_SCORE;
+    }
+
+    this.can_collide = function () {
+        return (this.state === FIREBALL_STATE_ACTIVE);
+    };
+
+    this.sphere = function () {
+        return [[this.x, this.y], 2*DT*FIREBALL_SPEED];
+    };
+
+    this.collision_polyline = function () {
+        const polyline = new Array();
+        for (var i = 0; i < 8; i++) {
+            polyline.push(add([this.x, this.y],
+                polar(FIREBALL_SIZE, i*PI/4)));
+        }
+        return polyline;
+    };
+
+    this.draw = function () {
+        if (this.state === FIREBALL_STATE_HIDDEN) return;
+        if (this.state === FIREBALL_STATE_ACTIVE) {
+            draw_noise(this.x, this.y, FIREBALL_SIZE);
+        } else if (this.state === FIREBALL_STATE_DESTRUCTION) {
+            draw_explosion(this.x, this.y, this.time_left);
+        }
+    };
+
+    this.update = function () {
+        if (this.state === FIREBALL_STATE_HIDDEN) {
+        } else if (this.state === FIREBALL_STATE_ACTIVE) {
+            const [dx, dy] = polar(DT*FIREBALL_SPEED, this.theta);
+            // detect end of canvas
+            if (this.x + dx - PADDING < 0 || this.x + dx - PADDING > WIDTH ||
+                this.y + dy - PADDING < 0 || this.y + dy - PADDING > HEIGHT) {
+                this.state = FIREBALL_STATE_HIDDEN;
+            }
+            this.x = (this.x + dx - PADDING + WIDTH)%WIDTH + PADDING;
+            this.y = (this.y + dy - PADDING + HEIGHT)%HEIGHT + PADDING;
+        } else if (this.state === FIREBALL_STATE_DESTRUCTION) {
+            this.time_left -= DT;
+            if (this.time_left < 0) {
+                this.state = FIREBALL_STATE_HIDDEN;
+            }
+        }
+        return this;
+    };
+}
+
+
+
+// KEYPRESSES
+
+const KEY_RELOAD    = "KeyR";
+const KEY_LEFT      = "ArrowLeft";
+const KEY_RIGHT     = "ArrowRight";
+const KEY_THRUST    = "ArrowUp";
+const KEY_FIRE      = "Space";
+const KEY_TELEPORT  = "ShiftLeft";
+
+const input_state = {
+    left_down: false,
+    right_down: false,
+    rotation_command: 0,
+    thrust_down: false,
+    fire_down: false,
+    teleport_down: false,
+};
+
+function process_keypress_event(key, down) {
+    if (key === KEY_RELOAD) {
+        if (!down) {
+            metadata.init();
+        }
+    } else if (key === KEY_LEFT) {
+        input_state.left_down = down;
+        if (!down && input_state.rotation_command === -1) {
+            input_state.rotation_command = input_state.right_down ? 1 : 0;
+        } else if (down && input_state.rotation_command === 0) {
+            input_state.rotation_command = -1;
+        }
+    } else if (key === KEY_RIGHT) {
+        input_state.right_down = down;
+        if (!down && input_state.rotation_command === 1) {
+            input_state.rotation_command = input_state.left_down ? -1 : 0;
+        } else if (down && input_state.rotation_command === 0) {
+            input_state.rotation_command = 1;
+        }
+    } else if (key === KEY_THRUST) {
+        input_state.thrust_down = down;
+    } else if (key === KEY_FIRE) {
+        input_state.fire_down = down;
+    } else if (key === KEY_TELEPORT) {
+        input_state.teleport_down = down;
+    }
+}
+
+function keydown_listener(event) {
+    process_keypress_event(event.code, true);
+}
+
+function keyup_listener(event) {
+    process_keypress_event(event.code, false);
+}
+
+document.addEventListener("keydown", keydown_listener);
+document.addEventListener("keyup", keyup_listener);
+
+
+
+// MAIN
+
+const MINE_TIMING               = 1.5;
+
+const mines = new Array();
+const fireballs = new Array();
+for (var i = 0; i < 32; i++) {
+    mines.push(new Mine(i));
+    fireballs.push(new Fireball());
+}
+const bullets = new Array();
+for (var i = 0; i < 8; i++) {
+    bullets.push(new Bullet());
+}
+
+function get_stage_mine_types(stage) {
+    return [0, 0, Math.floor((stage % 16) / 4), stage % 4];
+};
+
+function init_stage(mine_types) {
+    for (var i = 0; i < 4; i++) {
+        mines[8*i].state = 0;
+        fireballs[8*i].state = 0;
+        for (var j = 1; j < 8; j++) {
+            mines[8*i + j].init(mine_types[i], LOG2[j] - 1);
+            fireballs[8*i + j].state = FIREBALL_STATE_HIDDEN;
+        }
+    }
+    for (var i = 0; i < bullets.length; i++) {
+        bullets[i].valid = false;
+    }
+    mine_layer.init();
+}
+
+function check_mines_placement() {
+    for (var i = 0; i < mines.length; i++) {
+        if (mines[i].state === MINE_STATE_PLACEMENT) {
+            return;
+        }
+    }
+    ship.init();
+    for (var i = 0; i < 4; i++) {
+        mines[8*i + 1].init_timing(MINE_TIMING*(i+1));
+    }
+}
+
+function update() {
+    if (metadata.pending_reload) {
+        ship.state = SHIP_STATE_HIDDEN;
+        init_stage(get_stage_mine_types(metadata.stage));
+        metadata.pending_reload = false;
+    }
+
+    // detect collisions
+    var active_ennemies = 0;
+    for (var i = -1; i < bullets.length; i++) {
+        var object0 = (i === -1) ? ship : bullets[i];
+        if (!object0.can_collide()) continue;
+        var poly0 = object0.collision_polyline();
+        var [center0, size0] = object0.sphere();
+        for (var j = -1; j < 2*mines.length; j++) {
+            object1 = (j === -1) ? mine_layer :
+                (j < mines.length ? mines[j] : fireballs[j - mines.length]);
+            if (i === -1 && object1.state != 0)
+                active_ennemies += 1;
+            if (!object1.can_collide()) continue;
+            var poly1 = object1.collision_polyline();
+            var [center1, size1] = object1.sphere();
+            if (check_collision(poly0, center0, size0, poly1, center1, size1)) {
+                object0.init_destruction();
+                object1.init_destruction();
+                break;
+            }
+        }
+    }
+
+    // detect end of stage
+    if (ship.state === SHIP_STATE_ACTIVE && active_ennemies === 0) {
+        metadata.beat_stage();
+    }
+
+    // update objects and display
+    get_ctx().reset();
+    mine_layer.update().draw();
+    ship.update().draw();
+    for (var i = 0; i < mines.length; i++) {
+        mines[i].update().draw();
+        fireballs[i].update().draw();
+    }
+    for (var i = 0; i < bullets.length; i++) {
+        bullets[i].update().draw();
+    }
+    print_lives_and_score();
+}
+
+const metadata = {
+    pending_reload: true,
+    stage: 0,
+    lives: 4,
+    score: 0,
+
+    init: function () {
+        this.pending_reload = true;
+        this.stage = 0;
+        this.lives = 4;
+        this.score = 0;
+    },
+
+    beat_stage: function () {
+        this.pending_reload = true;
+        this.stage += 1;
+        if (this.stage % 4 === 0) {
+            this.lives += 1;
+        }
+    },
+
+    fail_stage: function () {
+        this.pending_reload = true;
+        this.lives -= 1;
+        if (this.lives < 0) {
+            alert("Game over! Score: " + this.score);
+            this.init();
+        }
+    },
+};
+setInterval(update, 1000*DT);
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+@h<style>
+@h.controller, .state-manager, .cache-manager, .sender, .receiver {text-transform: uppercase;}
+@h.controller {color: hsl(110, 100%, 30%);}
+@h.state-manager {color: hsl(0, 100%, 35%);}
+@h.cache-manager {color: hsl(40, 100%, 35%);}
+@h.sender {color: hsl(280, 100%, 40%);}
+@h.receiver {color: hsl(200, 100%, 35%);}
+@h.queue {font-weight: bold;}
+@h.service-text {font-style: italic;}
+@h.service-text, .service-link {color: #777;}
+@h</style>
+# Designing the client architecture
+
+
+Note: this article is part of the "Building a graphical multi-user spreadsheet editor in Zig" series. Read all the articles here:
+=> grid_series.html series homepage
+
+Note: this post is a bit dense, as I try to explain the whole thought process, and because some parts are based on design choices I haven't yet explained (I give some hints when it happens, but further explanations will come in other posts). Styling cues and an ASCII diagram at the end of the post might help to follow along, but feedback is welcome if this isn't enough.
+=> mailto:arthur@jacquin.xyz give feedback
+
+
+## Goals
+
+In a previous post, I experimented with multithreading, as there are many things to get done at the same time in a spreadsheet editor (collecting user input, communicating with the server, synchronizing states, computing new cell values).
+
+It's now time to design the architecture of grid client, in particular the different threads and how they exchange data. The goal is to minimize user-perceived latency, and to support both local mode and multi-user mode.
+
+
+## Enumerating the concurrent tasks
+
+@gFirst, one thread should be dedicated to collecting user input and displaying the interface as quickly as possible. It's better to show the user some data is not ready than to make it wait (generally speaking, the user should never wait). This thread is referred to as the controller and view.
+@h<p>First, one thread should be dedicated to collecting user input and displaying the interface as quickly as possible. It's better to show the user some data is not ready than to make it wait (generally speaking, the user should never wait). This thread is referred to as the <span class="controller">controller and view</span>.</p>
+
+Alongside this, it is also needed to update the content of the file according to modifications. I'll go into more detail about how content is synchronized between clients in a future post, but here is the general idea:
+* when grid is used in a multi-user environment, local modifications are sent to the server and store in a state overlay for temporary display. The server then checks if modifications are valid, sends the correct ones to all clients, and reports modifications [in]validation to the sending client.
+* when grid is in local mode, user modifications are directly accepted as valid.
+@gThe thread maintaining the content state is referred to as the state manager.
+@h<p>The thread maintaining the content state is referred to as the <span class="state-manager">state manager</span>.</p>
+
+@gLastly, the client needs to communicate with the server in multi-user mode. Communications are asynchronous, which calls for two additional threads: the sender and the receiver, both using the same socket. Using separate threads also allows the socket to be used in blocking mode, which is easier and fully in line with the architecture.
+@h<p>Lastly, the client needs to communicate with the server in multi-user mode. Communications are asynchronous, which calls for two additional threads: the <span class="sender">sender</span> and the <span class="receiver">receiver</span>, both using the same socket. Using separate threads also allows the socket to be used in blocking mode, which is easier and fully in line with the architecture.</p>
+
+
+## Formalizing inter-thread communication
+
+As seen in the first multithreading post, it is important to wonder about what and how data will be exchanged between threads.
+
+The controller can issue new modifications to both the server (via the sender) and the state manager. As the sender and state manager can be in a busy state, and the controller can't delay user input, inter-thread communication must be asynchronous. Similarly when the receiver receives a certified modification or a modification [in]validation, it should forward it to the state manager and resume socket reading as soon as possible.
+
+@gFor this kind of asynchronous communication, multithreading-safe queues will be used. Each queue has exactly one publisher and one consumer. The memory must be allocated by the publisher thread, and freed by the consumer thread.
+@h<p>For this kind of asynchronous communication, multithreading-safe <span class="queue">queues</span> will be used. Each queue has exactly one publisher and one consumer. The memory must be allocated by the publisher thread, and freed by the consumer thread.</p>
+
+@gHowever, asynchronous communication isn't always possible. For example, when the user scroll, the controller has to know almost instantly the content of the discovered cells. It could ask the state manager, but there is a problem: the state manager might not be available! This calls for a cache, whose purpose will be to store the last known state of a limited number of cells, so that the controller can display them fast. A new thread must then be created, to ensure the cache content is up to date. It is referred to as the cache manager.
+@h<p>However, asynchronous communication isn't always possible. For example, when the user scroll, the controller has to know almost instantly the content of the discovered cells. It could ask the state manager, but there is a problem: the state manager might not be available! This calls for a cache, whose purpose will be to store the last known state of a limited number of cells, so that the controller can display them fast. A new thread must then be created, to ensure the cache content is up to date. It is referred to as the <span class="cache-manager">cache manager</span>.</p>
+
+@gBut back to the communication question. In some cases, the controller wants the content owned by another thread (the cache manager) instantly, in other words in a synchronous way. That's why the threads, considered as entities with their respective internal data, can offer "services" to other threads: functions executed by a calling thread but using the callee thread data. Threads offering such services must ensure the high availability of the shared ressources (so that the service doesn't block the calling thread), as well as the multithreading safety.
+@h<p>But back to the communication question. In some cases, the controller wants the content owned by another thread (the cache manager) instantly, in other words in a synchronous way. That's why the threads, considered as entities with their respective internal data, can offer "<span class="service-text">services</span>" to other threads: functions executed by a calling thread but using the callee thread data. Threads offering such services must ensure the high availability of the shared ressources (so that the service doesn't block the calling thread), as well as the multithreading safety.</p>
+
+To sum up, threads can exchange data in two ways:
+@g* via asynchronous queues (suitable when the consumer thread might be in a busy state)
+@g* via synchronous services (suitable to synchronously interact with some high-availability data from another thread)
+@h<ul><li>via asynchronous <span class="queue">queues</span> (suitable when the consumer thread might be in a busy state)</li></ul>
+@h<ul><li>via synchronous <span class="service-text">services</span> (suitable to synchronously interact with some high-availability data from another thread)</li></ul>
+
+
+## Getting to the full picture
+
+Before listing the tasks of each thread, here is an ASCII diagram to show all of the inter-thread exchanges:
+
+```
+@g                            +------------+  modif attempt   +--------+
+@g                 draw_cell()| CONTROLLER | ---------------> | SENDER |  server
+@g                 /          |  AND VIEW  |    cursor pos    |        | - - >
+@g               /          / +------------+ ---------------> +--------+
+@g             /          /        |   |  draw_cursor_pos()
+@g           /          /          |   |             \
+@g         /          /      write |   | local         \
+@g       /          /      request |   | modif           \
+@g     /          /                |   |                   \
+@g   /   get_area()                v   v                     \
+@g +---------+   area request   +---------+  approved modif  +----------+
+@g |  CACHE  | ---------------> |  STATE  | <--------------- | RECEIVER |  server
+@g | MANAGER |    cell update   | MANAGER |  [in]validation  |          | < - -
+@g +---------+ <--------------- +---------+ <--------------- +----------+
+@h                            <span class="controller">+------------+</span>  modif attempt   <span class="sender">+--------+</span>
+@h                 <span class="service-text">draw_cell()</span><span class="controller">| CONTROLLER |</span> ---------------> <span class="sender">| SENDER |</span>  server
+@h                 <span class="service-link">/</span>          <span class="controller">|  AND VIEW  |</span>    cursor pos    <span class="sender">|        |</span> - - >
+@h               <span class="service-link">/</span>          <span class="service-link">/</span> <span class="controller">+------------+</span> ---------------> <span class="sender">+--------+</span>
+@h             <span class="service-link">/</span>          <span class="service-link">/</span>        |   |  <span class="service-text">draw_cursor_pos()</span>
+@h           <span class="service-link">/</span>          <span class="service-link">/</span>          |   |             <span class="service-link">\</span>
+@h         <span class="service-link">/</span>          <span class="service-link">/</span>      write |   | local         <span class="service-link">\</span>
+@h       <span class="service-link">/</span>          <span class="service-link">/</span>      request |   | modif           <span class="service-link">\</span>
+@h     <span class="service-link">/</span>          <span class="service-link">/</span>                |   |                   <span class="service-link">\</span>
+@h   <span class="service-link">/</span>   <span class="service-text">get_area()</span>                v   v                     <span class="service-link">\</span>
+@h <span class="cache-manager">+---------+</span>   area request   <span class="state-manager">+---------+</span>  approved modif  <span class="receiver">+----------+</span>
+@h <span class="cache-manager">|  CACHE  |</span> ---------------> <span class="state-manager">|  STATE  |</span> <--------------- <span class="receiver">| RECEIVER |</span>  server
+@h <span class="cache-manager">| MANAGER |</span>    cell update   <span class="state-manager">| MANAGER |</span>  [in]validation  <span class="receiver">|          |</span> < - -
+@h <span class="cache-manager">+---------+</span> <--------------- <span class="state-manager">+---------+</span> <--------------- <span class="receiver">+----------+</span>
+
+@gLegend:                                   \----- ONLY IN MULTI-USER MODE -----/
+@g    box         thread
+@g    -------->   asynchronous queue
+@g    fn() \ \    synchronous service
+@g    - - - - >   socket communication with server
+@hLegend:                                   <b>\----- ONLY IN MULTI-USER MODE -----/</b>
+@h    box         thread
+@h    -------->   asynchronous <span class="queue">queue</span>
+@h    <span class="service-text">fn()</span> <span class="service-link">\ \</span>    synchronous <span class="service-text">service</span>
+@h    - - - - >   socket communication with server
+```
+
+
+@gThe controller and view:
+@h<p>The <span class="controller">controller and view</span>:</p>
+* displays the user interface, and for that it fetches the most recent known cells state to the cache manager via the get_area() service
+* collects user input and acts accordingly. It can be: a new cursor position (sent to the sender), a modification (sent to both the sender and the state manager), a will to save the current file content to disk (sent to the state manager)
+* while waiting for user input, cells state and other clients' cursor position are updated and redrawn thanks to two services, draw_cell() and draw_cursor_pos(), offered respectively to the cache manager and the receiver
+
+@gThe state manager:
+@h<p>The <span class="state-manager">state manager</span>:</p>
+* stores the file content and merges modifications, taking into account local modifs sent by the controller, modifs approval reports and approved modifs sent by the receiver
+* computes cells value and state, sends the updates to the cache manager (so that the cache can be kept in sync)
+* sends the cells value and state requested by the cache manager to it
+* writes the currrent file state to disk when requested by the controller
+
+@gThe <span class="cache-manager">cache manager</span>:
+@h<p>The <span class="cache-manager">cache manager</span>:</p>
+* holds a limited amount of cells state, and manages what gets to stay in that cache and what doesn't
+* must be able to deliver at any time the get_area() service offered to the controller
+* asks for missing cells state to the state manager after cache misses (that can happen during the get_area() service)
+* receives all cells updates from the state manager, unpacks (for fast drawing) and store the relevant ones, and immediately redraws cells that need it via the draw_cell() service offered by the controller
+
+Note: if this is a performance bottleneck, work can be done to minimize the number of cells updates sent by the state manager to the cache manager (so that the latter does not have to process them all).
+
+@gThe sender encodes the data sent by other threads according to a protocol, and sends it to the server via a blocking socket. It can be:
+@h<p>The <span class="sender">sender</span> encodes the data sent by other threads according to a protocol, and sends it to the server via a blocking socket. It can be:</p>
+* a modification attempt, sent by the controller
+* a cursor position update, sent by the controller
+
+@gThe receiver receives the data sent by the server via a blocking socket, decodes it according to a protocol, and acts accordingly or forwards it to other threads. It can be:
+@h<p>The <span class="receiver">receiver</span> receives the data sent by the server via a blocking socket, decodes it according to a protocol, and acts accordingly or forwards it to other threads. It can be:</p>
+* a modification approved by the server, to be forwarded to the state manager
+* a modification approval report, to be forwarded to the state manager
+* a cursor position update, to be synchronously redrawn thanks to the draw_cursor_pos() service offered by the controller

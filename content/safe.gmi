@@ -1,0 +1,30 @@
+@h<p><svg width="120" height="40">
+@h<path d="m 0,32 0,8 16,0 0,-16 8,0 0,-8 -16,0 0,16 z" fill="#222"/>
+@h<path d="m 32,16 0,24 24,0 0,-24 -8,0 0,16 -8,0 0,-8 8,0 0,-8 z" fill="#222"/>
+@h<path d="m 64,0 0,40 8,0 0,-16 8,0 0,-8 -8,0 0,-8 8,0 0,-8 z" fill="#222"/>
+@h<path d="m 88,24 0,8 8,0 0,8 16,0 0,-8 -8,0 0,-8 8,0 0,-8 -16,0 0,8 z" fill="#222"/>
+@h</svg></p>
+@h<br><br>
+# safe - simple symmetric-key password encrypter
+
+safe is a simple password encrypter/decrypter. Combined with usual Unix utilities, it can be used as a suckless, flexible password manager.
+
+It uses a symmetric-key encryption algorithm, and encodes data in a textual, two-line (one for password, one for username) format.
+
+
+## Links
+
+=> safe-0.2.0.tar.gz source code (compressed tarball)
+=> https://github.com/arthur-jacquin/safe repository
+=> safe.1.html online manual page
+
+
+## Install
+
+```
+VERSION="0.2.0"
+wget https://jacquin.xyz/safe-$VERSION.tar.gz
+tar -x -f safe-$VERSION.tar.gz
+cd safe-$VERSION
+make tests install # as root
+```

@@ -1,0 +1,8 @@
+# Building a graphical multi-user spreadsheet editor in Zig
+
+
+=> grid_introduction.{{EXTENSION}} Introduction
+=> multithreading_test.{{EXTENSION}} Trying out multithreading
+=> data_model.{{EXTENSION}} Laying the foundations for the data model
+=> client_architecture.{{EXTENSION}} Designing the client architecture
+=> managing_signals.{{EXTENSION}} Managing signals in a multithreaded environment

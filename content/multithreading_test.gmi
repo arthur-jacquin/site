@@ -1,0 +1,60 @@
+# Trying out multithreading
+
+
+Note: this article is part of the "Building a graphical multi-user spreadsheet editor in Zig" series. Read all the articles here:
+=> grid_series.{{EXTENSION}} series homepage
+
+
+## Goals
+
+No Zig for today! As it's new for me, I want to try multithreading using classic tools first: C and pthread.h. I read this tutorial to get started:
+=> https://hpc-tutorials.llnl.gov/posix/ tutorial
+
+I set out to explore multithreading in successive stages, introducing new concepts one by one. The broad end goal was a program with at least two threads running concurrently and communicating data in a safe way.
+
+
+## Steps
+
+Note: the code for each of the following steps can be downloaded or browsed:
+=> multithreading_test.tar.gz source code (compressed tarball)
+=> https://github.com/arthur-jacquin/multithreading_test repository
+
+No multithreading for the first step, the point is to design what will be run concurrently (while remaining sequential for the moment). In this case, the program does two things: it collects an user specified string, then it displays a countdown to zero. I used termbox2.h for user input collection and visual feedback in the terminal.
+
+=> https://github.com/termbox/termbox2 termbox2.h
+
+Once it's working, I turned the sequential program into a multithreaded one, collecting user input and updating the countdown at the same time. For more robustness, any terminal rendering with termbox2.h was supposed not thread-safe. It therefore requires a mutex for serialization, as both threads issue calls to termbox2.h.
+
+Then, I added inter-thread communication with a queue: until a coutdown is being processed, the user can enter new coutdown durations to be processed after. That calls for another mutex for data safety, as both threads interact with the queue.
+
+Lastly, I introduced a condition variable so that new countdown durations can be entered at any time. I also refactored the code to move multithreading-related code to wrappers. Doing so limits occurences of such code, and thus ease appropriate error handling, correctness evaluation and maintenance, even though I skipped error handling (I wonder how it would compare in Zig).
+
+At the moment I'm happy with where I am with the experimentations. I especially enjoyed implementing the pthread_queue.h library: it has a pthread.h-inspired API and works with any type of data!
+
+
+## Notes for later
+
+* Multithreading can be appealing in various cases, but it comes with a complexity cost, which must be kept in mind during the design process.
+
+* Accessing/modifying global variables should mostly be done through wrapper functions, to centralize thread safety and error handling code.
+
+Things to think about when designing a multithreaded program:
+* When threads terminate? Should they be joined?
+* How threads communicate?
+* Which statements/functions are blocking? Can deadlocks occur?
+* Which library calls are thread-safe? Which are not?
+* When using dynamically-allocated memory, which thread is responsible for freeing which object?
+
+* pthread_t (just like other pthread.h types) should be considered opaque. For example, it means pthread_equal() should be used instead of ==.
+
+* Threads should be explicitely set at joinable.
+
+* pthread_exit() is implicitely called when a thread start routine returns, but must be explicitely called in main().
+
+* Mutexes and condition variables can be initialized statically (if using default attributes) with PTHREAD_{MUTEX,COND}_INITIALIZER.
+
+* Mutex locking attemps can be non-blocking with pthread_mutex_trylock().
+
+* pthread_cond_wait() might not wake up immediately after a pthread_cond_{signal,broadcast}() call: it still needs to lock the mutex back. Therefore, the signalling thread must release the associated mutex (if it owns it).
+
+* pthread.h implementations can issue spurious wake up to waiting threads, thus code that uses pthread_cond_wait() should not rely on the sole existence of a wake up. Instead, explicit condition checking and a while loop should be used.

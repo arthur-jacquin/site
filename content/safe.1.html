@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAFE(1)</title>
+<style>
+    html {overflow-y: scroll;}
+    body {background-color: #fff; color: #000; padding: 0; margin: 0;}
+    pre {margin: 10px; font-family: monospace, courier;}
+    span.headline, span.footline {font-weight: bold;}
+    .section, b {color: #005386; font-weight: bold;}
+    @media (prefers-color-scheme: dark) {
+        body {background-color: #000; color: #bdbdbd;}
+        .section, b {color: #56c8ff; font-weight: normal;}
+    }
+</style>
+</head>
+<body><pre>
+<span class="headline">SAFE(1)                  General Commands Manual                 SAFE(1)</span>
+
+<span class="section">NAME</span>
+       safe - simple symmetric-key password encrypter
+
+<span class="section">SYNOPSIS</span>
+       <b>safe</b> [<i>OPTIONS</i>] [<i>FILE</i>]
+
+<span class="section">DESCRIPTION</span>
+       <i>safe</i> is a password encrypter/decrypter using a symmetric-key encryption
+       algorithm.  It encodes data in a textual, two-line (one for password,
+       one for username) format.
+
+       If <i>FILE</i> is specified, safe decrypts and queries its content (or stdin
+       if <i>FILE</i> is "-"), else creates and encrypts a new entry.
+
+<span class="section">OPTIONS</span>
+   <b>Output (default: stdout)</b>
+       -o|--output &lt;file&gt;
+
+   <b>Key (default: none)</b>
+       -k|--key &lt;key&gt;
+       -K|--key-file &lt;file&gt;
+
+   <b>Password (only for creation, default: random generation)</b>
+       -p|--password &lt;password&gt;
+       -c|--password-character-set &lt;generated-password-character-set-id&gt; (default: p)
+       -l|--password-length &lt;generated-password-length&gt; (default: 20)
+
+   <b>Username (only for creation, default: none)</b>
+       -u|--username &lt;username&gt;
+       -U|--random-username
+       -C|--username-character-set &lt;generated-username-character-set-id&gt; (default: p)
+       -L|--username-length &lt;generated-username-length&gt; (default: 20)
+
+   <b>Notes (only for creation, default: none)</b>
+       -n|--notes &lt;notes&gt;
+
+   <b>Query output (only for querying, default: password)</b>
+       -f|--format &lt;output-format&gt; (default: %p)
+       -0|--only-password             short for: --format %p
+       -1|--only-username             short for: --format %u
+       -s|--separator &lt;separator&gt;     short for: --format %u&lt;separator&gt;%p
+
+   <b>Characters sets</b>
+       d|digits                       0 to 9
+       l|lowercase                    a to z
+       p|printable                    alphanumeric and special characters
+
+<span class="section">NOTES</span>
+   <b>Password management</b>
+       <i>safe</i> is NOT a password manager.  The user has both the responsability
+       and the flexibility to manage its encrypted password entries in its own
+       way.  A typical use is to store each entry in a dedicated file,
+       organize them in a file tree, and use tarballs or a version control
+       system to backup/synchronize them.
+
+       When querying a password entry, safe only considers the first two
+       lines.  Thus, additional lines can be used to store metadata.
+
+   <b>Cryptographic security</b>
+       <i>safe</i> uses its own implementation of a custom system involving Chacha20
+       at its core, as well as Murmur3 and host system pseudorandom number
+       generation.  Despite active efforts to ensure its security, no warranty
+       of any kind is provided, as specified in the LICENSE.
+
+<span class="section">EXAMPLES</span>
+           <b># safe --key key --password password > entry.safe</b>
+           <b># cat entry.safe</b>
+           ]e623d8e07fbb9d8817dd2fc9d91c4e40dfba813a87be7f6502e47e528634040a5c1bec0d10b8ac3397cab81968f8066e
+
+           <b># safe --key key entry.safe</b>
+           password
+
+       To hide sensitive data, one can use the provided <i>safe_prompt</i> shell
+       script for inputs and pipe the result to a clipboard program:
+
+           <b># safe --key `safe_prompt Key` entry.safe | clipboard-program</b>
+           Key:
+
+<span class="section">SEE ALSO</span>
+       <b>pass</b>(1)
+
+<span class="section">BUGS</span>
+       Send all bug reports with a patch to arthur@jacquin.xyz.
+
+<span class="footline">                                 safe-VERSION                          SAFE(1)</span>
+</pre>
+</body></html>

@@ -1,0 +1,35 @@
+@h<p><svg width="96" height="40">
+@h<path d="m 0,24 0,8 8,0 0,8 16,0 0,-8 -8,0 0,-8 8,0 0,-8 -16,0 0,8 z" fill="#222"/>
+@h<path d="m 32,16 0,24 24,0 0,-40 -8,0 0,32 -8,0 0,-8 8,0 0,-8 z" fill="#222"/>
+@h<path d="m 64,0 0,8 8,0 0,-8 z" fill="#222"/>
+@h<path d="m 64,16 0,24 8,0 0,-24 z" fill="#222"/>
+@h<path d="m 80,0 0,40 8,0 0,-24 8,0 0,-8 -8,0 0,-8 z" fill="#222"/>
+@h</svg></p>
+@h<br><br>
+# edit - simple text editor
+
+edit is a modal, terminal-based text editor. It aims to provide a simple yet powerful editing model, in a suckless-style codebase.
+
+edit uses a selection-centric, selection-then-action model inspired by kakoune, where a selection is a set of contiguous characters on a given line. Indeed, most commands act on a list of selections: on saved selections if any, otherwise on running selections.
+
+By default, the running selections list contains only the cursor, making the selection abstraction invisible for simple editing. It is also possible to drop an anchor below the cursor, making running selections contain all characters between the anchor and the cursor. For more elaborate editing, such as multi-cursor or column editing, there are several ways to save selections.
+
+
+## Links
+
+=> edit-0.3.2.tar.gz source code (compressed tarball)
+=> https://github.com/arthur-jacquin/edit repository
+=> https://lists.suckless.org/dev/2309/35441.html annoucement on suckless.org mailing list
+=> edit.1.html online manual page
+=> https://kakoune.org/why-kakoune/why-kakoune.html kakoune arguments for a reversed grammar
+
+
+## Install
+
+```
+VERSION="0.3.2"
+wget https://jacquin.xyz/edit-$VERSION.tar.gz
+tar -x -f edit-$VERSION.tar.gz
+cd edit-$VERSION
+make install # as root
+```

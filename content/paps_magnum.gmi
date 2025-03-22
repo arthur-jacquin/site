@@ -1,0 +1,7 @@
+# PAPS x Magnum
+
+=> images/menu.jpg Menu
+=> images/entree.jpg Entrée
+=> images/plat.jpg Plat
+=> images/dessert.jpg Dessert
+=> images/vin.jpg Vin

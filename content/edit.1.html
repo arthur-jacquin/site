@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en-US"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EDIT(1)</title>
+<style>
+    html {overflow-y: scroll;}
+    body {background-color: #fff; color: #000; padding: 0; margin: 0;}
+    pre {margin: 10px; font-family: monospace, courier;}
+    span.headline, span.footline {font-weight: bold;}
+    .section, b {color: #005386; font-weight: bold;}
+    @media (prefers-color-scheme: dark) {
+        body {background-color: #000; color: #bdbdbd;}
+        .section, b {color: #56c8ff; font-weight: normal;}
+    }
+</style>
+</head>
+<body><pre>
+<span class="headline">EDIT(1)                  General Commands Manual                 EDIT(1)</span>
+
+<span class="section">NAME</span>
+       edit - simple text editor
+
+<span class="section">SYNOPSIS</span>
+       <b>edit</b> <i>file</i>
+
+<span class="section">DESCRIPTION</span>
+       <i>edit</i> is a modal, terminal-based text editor. It aims to provide a
+       simple yet powerful editing model, in a suckless-style codebase.
+
+       <i>edit</i> uses a selection-centric, selection-then-action model inspired by
+       kakoune, where a selection is a set of contiguous characters on a given
+       line.  Indeed, most commands act on a list of selections: on saved
+       selections if any, otherwise on running selections.
+
+       By default, the running selections list contains only the cursor,
+       making the selection abstraction invisible for simple editing. It is
+       also possible to drop an anchor below the cursor, making running
+       selections contain all characters between the anchor and the cursor.
+       For more elaborate editing, such as multi-cursor or column editing,
+       there are several ways to save selections.
+
+<span class="section">OPTIONS</span>
+       <b>-v</b>     prints version information to stderr, then exits.
+
+<span class="section">USAGE</span>
+       The default mode is the normal mode, in which most keys are associated
+       to an edition command.
+
+       For some commands, it makes sense to execute them multiple times. Enter
+       a multiplier <i>m</i> before these commands to get the expected result. If no
+       multiplier is specified, the default value of 1 is assumed.
+
+   <b>Editor interaction</b>
+       <b>?</b>      display an help message
+
+       <b>q/Q</b>    quit/force quit
+
+       <b>s</b>      change a run-time setting (see subsection "Run-time settings")
+
+       <b>e/E</b>    execute make/a shell command and get back to <i>edit</i>
+
+   <b>File management</b>
+       <b>w/W</b>    write/write as
+
+       <b>R</b>      reload
+
+   <b>Entering insert mode</b>
+       <b>i</b>      enter insert mode (see subsection "Insert mode")
+
+       It is also possible to enter insert mode at a specific location.
+       However, these commands do not combine well when applied to one than
+       one selection, therefore they empty the saved selections list and
+       unanchor the anchor before entering insert mode.
+
+       <b>I/A</b>    at the start/end of the cursor line
+
+       <b>o/O</b>    on an empty line created below/above the cursor line
+
+   <b>Navigation</b>
+       <b>l/h, Right/Left</b>
+              move to <i>m</i> -th next/previous character
+
+       <b>j/k, Down/Up</b>
+              move to <i>m</i> -th next/previous line
+
+       <b>g/G</b>    move to <i>m</i> -th/last line of the file
+
+       <b>m</b>      move to matching bracket
+
+       <b>0/^/$</b>  move to start/first non-blank character/end of line
+
+       <b>t/T</b>    move to <i>m</i> -th next/previous word
+
+       <b>}/{</b>    move to <i>m</i> -th next/previous block
+
+       <b>n/N</b>    move to <i>m</i> -th next/previous selection
+
+       <b>J</b>      jump to <i>m</i> -th next match for prompted pattern (useful to navigate
+              quickly through the file without changing selections)
+
+   <b>Selections management</b>
+       <b>Escape</b> forget saved selections, unanchor, reset multiplier
+
+       <b>c</b>      display number of saved selections
+
+       <b>v</b>      anchor/unanchor
+
+       <b>a</b>      add running selections to saved selections, unanchor
+
+       <b>z</b>      duplicate the running selection on the next <i>m</i> lines (designed
+              for easy block/column editing)
+
+       <b>./%/b</b>  select cursor line/all lines/ <i>m</i> blocks
+
+       <b>:</b>      select custom range of lines
+
+       Custom ranges must be formatted <i>min,max</i> where <i>min</i> / <i>max</i> is either empty
+       (meaning 1/last line number), a dot (meaning cursor line number) or an
+       integer.
+
+       <b>f, /</b>   search for pattern (see subsection "Search pattern syntax")
+
+       <b>*</b>      search for the word that is currently under the cursor
+
+       Searching will create a new saved selections list containing all
+       substrings of previously saved selections matching the given pattern.
+
+   <b>Edition commands</b>
+       <b>u/U</b>    switch to lowercase/uppercase
+
+       <b>K</b>      comment/uncomment line
+
+       <b>>/<, Tab/Shift-Tab</b>
+              <i>m</i> increase/decrease line indent
+
+       <b>x, Delete/Backspace</b>
+              suppress selection content if any, else <i>m</i> characters
+              after/before
+
+       <b>r</b>      replace (see subsection "Replace pattern syntax")
+
+       <b>Control-A</b>
+              autocomplete with longest common prefix
+
+   <b>Lines management</b>
+       <i>edit</i> has a line-centric clipboard. The following commands do not act on
+       selections but directly on lines.
+
+       <b>y/Y</b>    yank <i>m</i> lines/blocks, starting at cursor
+
+       <b>d/D</b>    delete <i>m</i> lines/blocks, starting at cursor
+
+       <b>p/P</b>    paste after/before cursor line <i>m</i> times
+
+       <b>Shift-Down/Shift-Up</b>
+              move lines of running selections <i>m</i> lines down/up
+
+   <b>Insert mode</b>
+       In insert mode, most keys insert their character before the selections.
+
+       <b>Right, Left, Down, Up, Delete, Backspace, Control-A, Shift-Down
+       Shift-Up</b>
+              like in normal mode
+
+       <b>Escape</b> get back to normal mode
+
+   <b>Dialog mode</b>
+       When the editor need additionnal user input, it switches to dialog
+       mode. In this mode, the user is prompted something on the bottom line
+       of the screen.
+
+       <b>Left, Right, Control-A, Control-E</b>
+              navigate the input
+
+       <b>Up</b>     recover the last input associated with the prompt
+
+       <b>Down</b>   clear the input
+
+       <b>Delete/Backspace</b>
+              suppress character after/before the cursor
+
+       <b>Enter</b>  validate input, get back to normal mode
+
+       <b>Escape</b> cancel, get back to normal mode
+
+   <b>Run-time settings</b>
+       Setting assignements must be formatted <i>name=value</i> where <i>name</i> is in the
+       following list and <i>value</i> of the according type. Any integer value is
+       considered a boolean, 0 meaning FALSE and any other value meaning TRUE.
+
+       <b>c</b>      case sensitive (boolean, default: TRUE)
+
+       <b>fs</b>     field separator (character, default: ',')
+
+       <b>h</b>      highlight selections (boolean, default: TRUE)
+
+       <b>l</b>      language extension (string, default: deduced from filename)
+
+       <b>sh</b>     syntax highlight (boolean, default: TRUE)
+
+       <b>tw</b>     tab width (integer, default: 4)
+
+   <b>Search pattern syntax</b>
+       &lt;character&gt; ::= &lt;regular_char&gt;          # character (not &lt;esc_char&gt;)
+                     | "\" &lt;esc_char&gt;          # escaped character
+                     | "."                     # any character
+                     | "\d" | "\D"             # any [non] digit
+                     | "\w" | "\W"             # any [non] word character
+                     | "[" &lt;set&gt; "]"           # any character in &lt;set&gt;
+                     | "[^" &lt;set&gt; "]"          # any character not in &lt;set&gt;
+
+       &lt;esc_char&gt; ::= "\" | "^" | "$" | "|" | "(" | ")"
+                    | "*" | "+" | "?" | "{" | "[" | "."
+
+       &lt;set&gt; ::= &lt;items&gt;                       # &lt;item&gt; characters
+               | "-" &lt;items&gt;                   # "-" and &lt;items&gt; characters
+               | &lt;items&gt; "-"                   # "-" and &lt;items&gt; characters
+               | "-" &lt;items&gt; "-"               # "-" and &lt;items&gt; characters
+
+       &lt;items&gt; ::= &lt;non_minus&gt;                 # character (not "-")
+                 | &lt;non_minus&gt; "-" &lt;non_minus&gt; # range (inclusive)
+                 | &lt;items&gt; &lt;items&gt;             # characters in either &lt;items&gt;
+
+       &lt;repeater&gt; ::= ""                       # exactly 1
+                    | "+"                      # 1 or more (at least once)
+                    | "?"                      # 0 or 1 (at most once)
+                    | "*" | "{}"               # 0 or more (any number)
+                    | "{" &lt;int&gt; "}"            # exactly &lt;int&gt;
+                    | "{" &lt;int&gt; ",}"           # at least &lt;int&gt;
+                    | "{," &lt;int&gt; "}"           # at most &lt;int&gt;
+                    | "{" &lt;int&gt; "," &lt;int&gt; "}"  # range (inclusive)
+
+       &lt;int&gt; ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+               | &lt;int&gt; &lt;int&gt;
+
+       &lt;assertion&gt; ::= "^" | "$"               # start/end of line
+                     | "\A" | "\Z"             # start/end of selection
+                     | "\b" | "\B"             # [non] words boundary
+
+       &lt;atom&gt; ::= &lt;assertion&gt; | &lt;character&gt; &lt;repeater&gt;
+
+       &lt;OR_atom&gt; ::= &lt;atom&gt; | &lt;OR_atom&gt; "|" &lt;atom&gt;
+
+       &lt;group&gt; ::= "" | &lt;group&gt; &lt;OR_atom&gt;
+
+       &lt;block&gt; ::= &lt;atom&gt; | "(" &lt;group&gt; ")" &lt;repeater&gt;
+
+       &lt;OR_block&gt; ::= &lt;block&gt; | &lt;OR_block&gt; "|" &lt;block&gt;
+
+       &lt;pattern&gt; ::= "" | &lt;pattern&gt; &lt;OR_block&gt;
+
+   <b>Replace pattern syntax</b>
+       &lt;pattern&gt; ::= &lt;regular_char&gt;            # character (not "\" or "$")
+                   | "\\" | "\$"               # escaped "\" and "$"
+                   | "\0" | "$0"               # whole initial selection
+                   | "\" &lt;pos_digit&gt;           # &lt;pos_digit&gt;-th subpattern
+                   | "$" &lt;pos_digit&gt;           # &lt;pos_digit&gt;-th field
+                   | &lt;pattern&gt; &lt;pattern&gt;       # concatenation
+
+
+       &lt;pos_digit&gt; ::= "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+<span class="section">NOTES</span>
+   <b>Search and replace engine</b>
+       The search and replace engine is home-grown. While it has some caveats
+       (see section "ISSUES"), it is quite capable: the search is incremental
+       and supports regular expressions, and the replace supports the reuse of
+       subpatterns and fields from the to-be-replaced string.
+
+       Using the engine should feel pretty straightforward as it can be used
+       in a typical sed fashion:
+
+       <b>(1)</b>    Choose a line range with <b>%</b> or <b>b</b> or <b>:</b> or <b>.</b>
+
+       <b>(2)</b>    Specify a search pattern with <b>f</b> or <b>/</b>
+
+       <b>(3)</b>    Specify a replace pattern with <b>r</b>
+
+       But there is more to it than a sed imitation. Using a home-grown engine
+       allows for better integration with the editor. Indeed, as all these
+       steps make sense individually, one can use any combination of these.
+
+       Syntaxes are described in a Backus-Naur form notation in subsections
+       "Search pattern syntax" and "Replace pattern syntax".
+
+   <b>Syntax highlighting system</b>
+       Designing a syntax highlighting system capable enough to perform
+       exhaustive, semantically correct syntax highlighting for many languages
+       is very challenging. In the context of a tiny, autonomous codebase,
+       this goal is soon forgotten.
+
+       <i>edit</i> syntax highlighting system try to balance capability and
+       simplicity. Its semantic understanding is limited, and is designed to
+       process lines individually. Its simplicity makes it really easy to add
+       language support, and easy to compute at runtime.
+
+       It works well for keywords, numbers, monoline strings/comments, and
+       markup languages where a line break is significant (Markdown or Gemtext
+       for example); but not so much for multilines strings/comments or some
+       other markup languages (XML for example).
+
+       The commenting command use single line comments: the user is encouraged
+       to use it over ranges of lines instead of using multiline comments.
+
+   <b>Encoding</b>
+       <i>edit</i> only works with UTF-8 encoded text.
+
+   <b>Tabulations</b>
+       <i>edit</i> is designed to work with spaces, not tabs. When opening a file,
+       tabs are converted to spaces (according to the <b>TAB_WIDTH</b> value).
+
+       Unfortunately, some languages recquire tabs (makefiles are an example).
+       To accomodate these, the language-level <b>CONVERT_LEADING_SPACES</b> flag can
+       be set so that leading spaces are converted back to tabs when saving.
+
+   <b>Trailing spaces</b>
+       By default, the <b>SUPPRESS_TRAILING_SPACES</b> option is set, which has the
+       effect of ignoring trailing spaces when saving.
+
+   <b>Multiples selections on a given line</b>
+       Selections can not overlap.
+
+       Indenting and commenting is performed at most once per line, no matter
+       how much selections a line contains.
+
+   <b>Undo/redo</b>
+       There is no undo/redo mechanism. Instead, the user is advised to save
+       frequently and reload the file when a set of actions is to be reverted.
+
+   <b>Arbitrary yanking</b>
+       It is not possible to yank only a part of a given line. The clipboard
+       is designed to work with ranges of lines, not arbitrary text sequences.
+
+   <b>Lines wrapping</b>
+       It is not possible to wrap lines.
+
+<span class="section">CUSTOMIZATION</span>
+       <i>edit</i> is customized by creating a custom <i>config.h</i> and (re)compiling the
+       source code. This keeps it fast, secure and simple.
+
+   <b>Languages support</b>
+       Supported languages are defined in <i>languages.h</i> with two <b>#ifdef</b> <i>LANGUAGE</i>
+       enclosed parts (one for language declaration, one for inclusion in the
+       <b>languages</b> array). Mimicking other languages is advised when adding
+       support for a new anguage.
+
+<span class="section">SEE ALSO</span>
+       <b>kakoune</b>(1), <b>vis</b>(1)
+
+<span class="section">ISSUES</span>
+   <b>Repeaters in regular expressions</b>
+       Repeaters always match as much as possible, potentially eating too much
+       characters and invalidating a valid match.
+
+       For example, ".*." never matches anything because the leading ".*" eats
+       all the selection, leaving no more characters to be matched by the
+       trailing ".".
+
+<span class="section">BUGS</span>
+       Send all bug reports with a patch to arthur@jacquin.xyz.
+
+<span class="footline">                                 edit-VERSION                          EDIT(1)</span>
+</pre>
+</body></html>

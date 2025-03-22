@@ -1,0 +1,89 @@
+# prepa
+
+Une partie des cahiers magiques...
+
+Si ces fiches vous sont utiles, n'hésitez pas à en parler autour de vous, à les imprimer... Si vous avez un commentaire ou une question :
+=> mailto:arthur@jacquin.xyz arthur@jacquin.xyz
+
+
+## Mathématiques
+
+### Sup
+
+=> analyse.pdf analyse
+=> arithmetique.pdf arithmetique
+=> polynomes.pdf polynomes
+=> structures.pdf structures
+=> matrices.pdf matrices
+=> espaces.pdf espaces
+=> aleatoire.pdf aleatoire
+=> outils.pdf outils
+
+### Spé
+
+=> formulaire_maths.pdf formulaire_maths
+=> topologie.pdf topologie (améliorable)
+=> series.pdf series
+=> suites_series_fonctions.pdf suites_series_fonctions
+=> integration.pdf integration
+=> derivation.pdf derivation
+=> structures_arithmetique.pdf structures_arithmetique
+=> reduction.pdf reduction
+=> prehilbertiens.pdf prehilbertiens
+=> probas.pdf probas
+=> equa_diff.pdf equa_diff
+=> calcul_diff.pdf calcul_diff
+
+
+## Physique
+
+### Sup
+
+=> analyser_un_resultat.pdf analyser_un_resultat
+=> oscillateur_harmonique.pdf oscillateur_harmonique
+=> signaux_sup.pdf signaux_sup
+=> electricite.pdf electricite
+=> optique_sup.pdf optique_sup
+=> thermodynamique.pdf thermodynamique
+=> old_mecanique.pdf old_mecanique (obsolète, voir le cours de spé)
+
+### Spé
+
+=> formulaire_physique.pdf formulaire_physique
+=> signaux.pdf signaux
+=> mecanique.pdf mecanique
+=> thermo_statistique.pdf thermo_statistique
+=> transferts_thermiques.pdf transferts_thermiques
+=> electromagnetique.pdf electromagnetique
+=> ondes.pdf ondes
+=> optique.pdf optique
+=> quantique.pdf quantique
+
+
+## Chimie
+
+### Sup
+
+=> atomistique.pdf atomistique
+=> cinetique.pdf cinetique
+=> solutions.pdf solutions
+
+### Spé
+
+=> thermochimie.pdf thermochimie (améliorable)
+=> redox.pdf redox
+
+
+## Informatique
+
+=> info.pdf info
+=> complexite.pdf complexite (faible intérêt)
+=> representation_reel.pdf representation_reel (faible intérêt)
+=> vocabulaire.pdf vocabulaire (faible intérêt)
+=> scripts.pdf scripts (faible intérêt)
+
+
+## Langues
+
+=> oraux_francais.pdf oraux_francais (faible intérêt)
+=> oraux_anglais.pdf oraux_anglais (faible intérêt)
